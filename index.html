@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>大学生职业测评 - 小总秘</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+  }
+  .container {
+    max-width: 720px;
+    width: 100%;
+    background: rgba(255,255,255,0.96);
+    border-radius: 24px;
+    padding: 32px 28px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    margin-top: 20px;
+    margin-bottom: 20px;
+  }
+  h1 {
+    font-size: 26px;
+    text-align: center;
+    color: #333;
+  }
+  .subtitle {
+    text-align: center;
+    color: #888;
+    font-size: 14px;
+    margin: 8px 0 24px;
+    line-height: 1.6;
+  }
+  .step-bar {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 28px;
+    position: relative;
+  }
+  .step-bar::before {
+    content: '';
+    position: absolute;
+    top: 14px;
+    left: 30px;
+    right: 30px;
+    height: 3px;
+    background: #e0e0e0;
+    border-radius: 2px;
+    z-index: 0;
+  }
+  .step {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: #e0e0e0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 600; color: #999;
+    position: relative; z-index: 1;
+    transition: all 0.3s;
+  }
+  .step.active { background: #667eea; color: #fff; transform: scale(1.1); }
+  .step.done { background: #48bb78; color: #fff; }
+  .step-label {
+    position: absolute; top: 36px;
+    font-size: 11px; color: #aaa;
+    white-space: nowrap;
+    left: 50%; transform: translateX(-50%);
+  }
+  .step.active .step-label, .step.done .step-label { color: #667eea; font-weight: 600; }
+
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  .question { margin-bottom: 18px; }
+  .question-text {
+    font-size: 16px; font-weight: 600; color: #333;
+    margin-bottom: 10px; line-height: 1.5;
+  }
+  .options { display: flex; gap: 8px; flex-wrap: wrap; }
+  .opt-btn {
+    flex: 1; min-width: 56px;
+    padding: 10px 8px;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    background: #fafafa;
+    cursor: pointer;
+    text-align: center;
+    font-size: 13px; color: #666;
+    transition: all 0.2s;
+  }
+  .opt-btn:hover { border-color: #667eea; background: #f0f2ff; }
+  .opt-btn.selected { border-color: #667eea; background: #667eea; color: #fff; font-weight: 600; }
+  .opt-btn input { display: none; }
+
+  .nav-btns {
+    display: flex; gap: 12px;
+    margin-top: 28px;
+  }
+  .btn {
+    flex: 1;
+    padding: 14px;
+    border: none; border-radius: 14px;
+    font-size: 16px; font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-primary { background: #667eea; color: #fff; }
+  .btn-primary:hover { background: #5a6fd6; transform: translateY(-1px); }
+  .btn-primary:disabled { background: #ccc; cursor: not-allowed; transform: none; }
+  .btn-secondary { background: #f0f0f0; color: #666; }
+  .btn-secondary:hover { background: #e0e0e0; }
+
+  .result-section {
+    margin-bottom: 24px;
+    padding: 20px;
+    border-radius: 16px;
+    background: #f8f9ff;
+  }
+  .result-title {
+    font-size: 18px; font-weight: 700;
+    margin-bottom: 12px;
+  }
+  .result-desc { font-size: 14px; color: #555; line-height: 1.8; }
+  .badge {
+    display: inline-block;
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 13px; font-weight: 600;
+    margin: 3px 4px;
+  }
+  .badge.r { background: #fecaca; color: #dc2626; }
+  .badge.i { background: #fed7aa; color: #ea580c; }
+  .badge.a { background: #fecaca; color: #e11d48; }
+  .badge.s { background: #bbf7d0; color: #16a34a; }
+  .badge.e { background: #fef08a; color: #ca8a04; }
+  .badge.c { background: #bfdbfe; color: #2563eb; }
+
+  .career-list { list-style: none; }
+  .career-list li {
+    padding: 10px 14px;
+    margin-bottom: 8px;
+    background: #fff;
+    border-radius: 10px;
+    border-left: 4px solid #667eea;
+    font-size: 14px; color: #333;
+  }
+  .career-list li small { display: block; color: #999; font-size: 12px; margin-top: 3px; }
+
+  .radar-container { max-width: 280px; margin: 0 auto 20px; }
+
+  .progress-text {
+    text-align: center;
+    color: #999;
+    font-size: 13px;
+    margin-bottom: 12px;
+  }
+
+  @media (max-width: 480px) {
+    .container { padding: 20px 16px; }
+    .opt-btn { min-width: 44px; padding: 8px 6px; font-size: 12px; }
+    h1 { font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+<div class="container" id="app">
+  <h1>🎯 大学生职业测评</h1>
+  <p class="subtitle">基于霍兰德职业兴趣理论 · 5 个维度 · 找出适合你的职业方向</p>
+
+  <!-- 步骤条 -->
+  <div class="step-bar" id="stepBar"></div>
+
+  <!-- 开始页 -->
+  <div class="screen active" id="screen-0">
+    <div style="text-align:center;padding:30px 0;">
+      <div style="font-size:64px;margin-bottom:16px;">🧭</div>
+      <p style="font-size:16px;color:#555;line-height:1.8;margin-bottom:24px;">
+        不知道自己适合什么工作？<br>
+        这个测评从<strong>兴趣、技能、价值观、工作风格、学习偏好</strong><br>
+        五个维度帮你找到方向。
+      </p>
+      <p style="font-size:13px;color:#999;margin-bottom:28px;">共 25 题，约 5-8 分钟</p>
+      <button class="btn btn-primary" onclick="startQuiz()" style="max-width:240px;margin:0 auto;">开始测评 →</button>
+    </div>
+  </div>
+
+  <!-- 答题页 -->
+  <div class="screen" id="screen-1">
+    <div class="progress-text" id="progressText">第 1 / 25 题</div>
+    <div id="questionArea"></div>
+    <div class="nav-btns">
+      <button class="btn btn-secondary" id="prevBtn" onclick="prevQuestion()">← 上一题</button>
+      <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">下一题 →</button>
+    </div>
+  </div>
+
+  <!-- 结果页 -->
+  <div class="screen" id="screen-2">
+    <div id="resultArea"></div>
+    <div class="nav-btns" style="margin-top:12px;">
+      <button class="btn btn-secondary" onclick="startQuiz()">重新测评</button>
+      <button class="btn btn-primary" onclick="window.print()">🖨️ 打印/保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ========== 题库 ==========
+const dimensions = ['R','I','A','S','E','C'];
+const dimNames = { R:'实干型', I:'研究型', A:'艺术型', S:'社会型', E:'企业型', C:'常规型' };
+const dimColors = { R:'#dc2626', I:'#ea580c', A:'#e11d48', S:'#16a34a', E:'#ca8a04', C:'#2563eb' };
+
+const questions = [
+  // 兴趣维度 (1-5)
+  { d:'R', q:'我喜欢动手操作，比如修理东西、组装模型、做手工', cat:'兴趣' },
+  { d:'I', q:'我喜欢探索事物的原理，做实验、分析数据、解决逻辑难题', cat:'兴趣' },
+  { d:'A', q:'我喜欢创意表达，比如写作、画画、音乐、设计、摄影', cat:'兴趣' },
+  { d:'S', q:'我喜欢帮助别人，教别人东西、做志愿者、与人交流', cat:'兴趣' },
+  { d:'E', q:'我喜欢领导团队、说服别人、谈生意、组织活动', cat:'兴趣' },
+
+  // 技能倾向 (6-10)
+  { d:'C', q:'我擅长整理数据、做表格、按流程完成任务', cat:'技能' },
+  { d:'R', q:'我擅长使用工具/设备，动手能力强', cat:'技能' },
+  { d:'I', q:'我擅长分析问题、做研究、查找资料', cat:'技能' },
+  { d:'A', q:'我擅长写作、表达、创意构思', cat:'技能' },
+  { d:'S', q:'我擅长倾听、沟通、协调人际关系', cat:'技能' },
+
+  // 价值观 (11-15)
+  { d:'E', q:'对我来说，赚钱和获得成就感比什么都重要', cat:'价值观' },
+  { d:'S', q:'我希望工作能对社会有贡献，帮助到他人', cat:'价值观' },
+  { d:'C', q:'我喜欢稳定、有保障、规章制度明确的工作', cat:'价值观' },
+  { d:'I', q:'我追求专业深度，希望成为某个领域的专家', cat:'价值观' },
+  { d:'A', q:'我渴望自由发挥创意，不喜欢被条条框框束缚', cat:'价值观' },
+
+  // 工作风格 (16-20)
+  { d:'R', q:'我更喜欢和"物"打交道，而不是和"人"打交道', cat:'工作风格' },
+  { d:'S', q:'在团队中我通常是那个照顾大家情绪的人', cat:'工作风格' },
+  { d:'E', q:'我喜欢竞争，不怕压力，敢于冒险', cat:'工作风格' },
+  { d:'C', q:'我做事有条理，喜欢提前计划好每一步', cat:'工作风格' },
+  { d:'I', q:'我一个人专注做研究比参加热闹的社交活动更开心', cat:'工作风格' },
+
+  // 学习偏好 (21-25)
+  { d:'R', q:'我更喜欢通过动手实践来学习', cat:'学习偏好' },
+  { d:'I', q:'我喜欢看书、查文献，系统性地学习知识', cat:'学习偏好' },
+  { d:'A', q:'我通过画画、音乐、写作等方式表达自己时学得最好', cat:'学习偏好' },
+  { d:'S', q:'我和别人讨论、教别人的时候学得最快', cat:'学习偏好' },
+  { d:'E', q:'我喜欢参加比赛、项目实战，在实践中学习', cat:'学习偏好' },
+];
+
+const answers = new Array(questions.length).fill(0);
+
+// ========== 推荐职业 ==========
+const careerMap = {
+  R: [
+    { title:'工程师（机械/电子/土木）', desc:'适合动手能力强的技术型人才' },
+    { title:'IT运维/网络工程师', desc:'计算机硬件和网络维护' },
+    { title:'技师/技术员', desc:'各类设备操作与维修' },
+    { title:'建筑/施工管理', desc:'工程建设相关岗位' },
+    { title:'无人机飞手/测绘员', desc:'新兴技术实操岗位' },
+  ],
+  I: [
+    { title:'数据分析师', desc:'Python/SQL 分析数据，互联网热门岗位' },
+    { title:'研究员/实验室技术员', desc:'科研机构或高校研究室' },
+    { title:'软件开发工程师', desc:'编程、算法、系统设计' },
+    { title:'金融分析师/风控', desc:'银行、证券、保险行业' },
+    { title:'医学/医药研发', desc:'医疗健康领域' },
+  ],
+  A: [
+    { title:'新媒体运营/内容创作', desc:'短视频、公众号、小红书创作' },
+    { title:'UI/UX 设计师', desc:'互联网产品界面与交互设计' },
+    { title:'平面设计师/插画师', desc:'视觉传达相关工作' },
+    { title:'编导/视频剪辑', desc:'影视传媒行业' },
+    { title:'文案策划/广告创意', desc:'营销创意岗位' },
+  ],
+  S: [
+    { title:'教师/培训师', desc:'教育培训行业' },
+    { title:'人力资源HR', desc:'招聘、培训、员工关系' },
+    { title:'心理咨询师', desc:'心理健康服务' },
+    { title:'销售/客服管理', desc:'客户服务与关系维护' },
+    { title:'社区运营/社群管理', desc:'互联网社区运营' },
+  ],
+  E: [
+    { title:'市场营销/品牌经理', desc:'品牌推广与营销策划' },
+    { title:'销售经理/商务拓展', desc:'企业销售与业务开发' },
+    { title:'创业者/项目经理', desc:'自主创业或项目管理' },
+    { title:'电商运营/直播运营', desc:'电商平台运营与管理' },
+    { title:'管理培训生', desc:'大企业管理层储备' },
+  ],
+  C: [
+    { title:'会计/审计', desc:'财务管理相关工作' },
+    { title:'行政管理/文秘', desc:'企业行政办公管理' },
+    { title:'银行柜员/客服', desc:'银行业务操作' },
+    { title:'仓储物流管理', desc:'供应链与仓储管理' },
+    { title:'公务员/事业单位', desc:'稳定的体制内工作' },
+  ],
+};
+
+// ========== 渲染 ==========
+function renderStepBar() {
+  const steps = ['开始','兴趣','技能','价值观','风格','偏好','结果'];
+  const bar = document.getElementById('stepBar');
+  // determine active step
+  const activeIdx = getCurrentStepIndex();
+  bar.innerHTML = steps.map((s,i) => {
+    let cls = 'step';
+    if (i === activeIdx) cls += ' active';
+    else if (i < activeIdx) cls += ' done';
+    return `<div class="${cls}" style="position:relative;">
+      ${i < activeIdx ? '✓' : (i === 0 ? '🏠' : i)}
+      <span class="step-label">${s}</span>
+    </div>`;
+  }).join('');
+}
+
+function getCurrentStepIndex() {
+  const qIdx = answers.findIndex(a => a === 0);
+  if (qIdx === -1 || qIdx >= questions.length) return 6;
+  // 5 dimensions: 5 questions each
+  // step 1: 0-4, step 2: 5-9, step 3: 10-14, step 4: 15-19, step 5: 20-24
+  if (qIdx < 5) return 1;
+  if (qIdx < 10) return 2;
+  if (qIdx < 15) return 3;
+  if (qIdx < 20) return 4;
+  return 5;
+}
+
+// ========== 导航 ==========
+let currentQ = 0;
+
+function startQuiz() {
+  // reset
+  for (let i = 0; i < answers.length; i++) answers[i] = 0;
+  currentQ = 0;
+  showScreen(1);
+  renderQuestion();
+}
+
+function showScreen(n) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + n).classList.add('active');
+}
+
+function renderQuestion() {
+  const q = questions[currentQ];
+  document.getElementById('progressText').textContent = `第 ${currentQ + 1} / ${questions.length} 题 · ${q.cat}`;
+
+  const html = `
+    <div class="question">
+      <div class="question-text">${q.q}</div>
+      <div class="options">
+        ${[1,2,3,4,5].map(v => {
+          const labels = ['非常不符','不太符合','一般','比较符合','非常符合'];
+          const sel = answers[currentQ] === v ? ' selected' : '';
+          return `<label class="opt-btn${sel}">
+            <input type="radio" name="q${currentQ}" value="${v}" ${answers[currentQ] === v ? 'checked' : ''} onchange="selectAnswer(${currentQ},${v})">
+            ${labels[v-1]}
+          </label>`;
+        }).join('')}
+      </div>
+    </div>
+  `;
+  document.getElementById('questionArea').innerHTML = html;
+
+  document.getElementById('prevBtn').style.display = currentQ === 0 ? 'none' : 'block';
+  document.getElementById('nextBtn').textContent = currentQ === questions.length - 1 ? '查看结果 →' : '下一题 →';
+  document.getElementById('nextBtn').disabled = answers[currentQ] === 0;
+
+  renderStepBar();
+}
+
+function selectAnswer(idx, val) {
+  answers[idx] = val;
+  // Re-render to update UI
+  const radios = document.querySelectorAll(`input[name="q${idx}"]`);
+  radios.forEach(r => {
+    if (+r.value === val) r.parentElement.classList.add('selected');
+    else r.parentElement.classList.remove('selected');
+  });
+  document.getElementById('nextBtn').disabled = false;
+}
+
+function nextQuestion() {
+  if (answers[currentQ] === 0) return;
+  if (currentQ === questions.length - 1) {
+    showResults();
+    return;
+  }
+  currentQ++;
+  renderQuestion();
+}
+
+function prevQuestion() {
+  if (currentQ === 0) return;
+  currentQ--;
+  renderQuestion();
+}
+
+// ========== 结果计算 ==========
+function calcResults() {
+  const scores = { R:0, I:0, A:0, S:0, E:0, C:0 };
+  questions.forEach((q, i) => {
+    if (answers[i] > 0) scores[q.d] += answers[i];
+  });
+  // normalize to percentage
+  const maxScore = 25; // 5 questions * 5 points
+  Object.keys(scores).forEach(k => scores[k] = Math.round(scores[k] / maxScore * 100));
+
+  // sort
+  const sorted = Object.entries(scores).sort((a,b) => b[1] - a[1]);
+  const top3 = sorted.slice(0, 3).map(s => s[0]);
+
+  return { scores, sorted, top3, fullCode: top3.join('') };
+}
+
+function showResults() {
+  showScreen(2);
+  renderStepBar();
+
+  const { scores, sorted, top3, fullCode } = calcResults();
+
+  // radar chart as simple bars
+  let radarHTML = `<div style="display:flex;flex-direction:column;gap:8px;padding:0 10px;">`;
+  ['R','I','A','S','E','C'].forEach(k => {
+    const pct = scores[k];
+    const isTop = top3.includes(k);
+    radarHTML += `
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="width:44px;font-size:14px;font-weight:${isTop?'700':'400'};color:${isTop?dimColors[k]:'#888'};">
+          ${dimNames[k]} (${k})
+        </span>
+        <div style="flex:1;height:22px;background:#eee;border-radius:11px;overflow:hidden;">
+          <div style="height:100%;width:${pct}%;background:${dimColors[k]};border-radius:11px;transition:width 1s;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;font-weight:600;${pct<15?'color:#666;':''}">
+            ${pct > 10 ? pct + '%' : ''}
+          </div>
+        </div>
+      </div>
+    `;
+  });
+  radarHTML += `</div>`;
+
+  // Top 3 badges
+  const badgesHTML = sorted.slice(0,3).map(([k,v]) => 
+    `<span class="badge ${k.toLowerCase()}">${dimNames[k]} (${k}) ${scores[k]}%</span>`
+  ).join(' ');
+
+  // Career suggestions for top type
+  const careersHTML = top3.map(k => {
+    const jobs = careerMap[k];
+    if (!jobs) return '';
+    return `
+      <div class="result-section" style="border-left:4px solid ${dimColors[k]};">
+        <div class="result-title" style="color:${dimColors[k]};">${dimNames[k]} (${k}) — 推荐职业</div>
+        <ul class="career-list">
+          ${jobs.map(j => `<li><strong>${j.title}</strong><small>${j.desc}</small></li>`).join('')}
+        </ul>
+      </div>
+    `;
+  }).join('');
+
+  // Interpretation
+  const interpretMap = {
+    R: '你属于<strong>实干型</strong>——动手能力强，喜欢具体明确的任务。适合工程技术类、实操类职业。',
+    I: '你属于<strong>研究型</strong>——爱思考、爱分析，喜欢独立解决复杂问题。适合科研、数据分析、技术开发。',
+    A: '你属于<strong>艺术型</strong>——有创意、有想法，追求自我表达。适合设计、内容创作、传媒行业。',
+    S: '你属于<strong>社会型</strong>——乐于助人、善于沟通，温暖有同理心。适合教育、咨询、人力资源。',
+    E: '你属于<strong>企业型</strong>——有野心、有魄力，喜欢领导和竞争。适合销售、管理、创业。',
+    C: '你属于<strong>常规型</strong>——细致严谨、有条不紊，喜欢稳定和规则。适合财务、行政、公务员。',
+  };
+
+  document.getElementById('resultArea').innerHTML = `
+    <div style="text-align:center;margin-bottom:20px;">
+      <div style="font-size:48px;margin-bottom:8px;">🧭</div>
+      <h2 style="font-size:22px;">你的职业代码：<span style="color:#667eea;">${fullCode}</span></h2>
+      <div style="margin:12px 0 20px;">${badgesHTML}</div>
+    </div>
+
+    <div class="result-section">
+      <div class="result-title">📊 各维度得分</div>
+      ${radarHTML}
+    </div>
+
+    <div class="result-section" style="background:#667eea15;">
+      <div class="result-title">💡 解读</div>
+      <div class="result-desc">
+        <p style="margin-bottom:12px;">你的主要类型为：<strong>${dimNames[top3[0]]}</strong>，次要类型为 <strong>${dimNames[top3[1]]}</strong> 和 <strong>${dimNames[top3[2]]}</strong>。</p>
+        <p>${interpretMap[top3[0]] || ''}</p>
+      </div>
+    </div>
+
+    ${careersHTML}
+
+    <div class="result-section" style="background:#f0f9ff;">
+      <div class="result-title">📝 给你的建议</div>
+      <div class="result-desc">
+        <p style="margin-bottom:8px;">1️⃣ <strong>不用太局限</strong> — 测评结果是参考，不是定论。你的兴趣和能力会随着经历增长而变化。</p>
+        <p style="margin-bottom:8px;">2️⃣ <strong>行动起来</strong> — 找相关专业的学长学姐聊聊，或者到大二大三争取一份实习，亲身体验才知道适不适合。</p>
+        <p style="margin-bottom:8px;">3️⃣ <strong>组合发展</strong> — 最强的竞争力往往来自跨领域能力组合。比如"技术+沟通"、"创意+执行"。</p>
+        <p>4️⃣ <strong>没关系反复测</strong> — 隔半年再测一次，看看自己的变化趋势 😄</p>
+      </div>
+    </div>
+  `;
+}
+</script>
+</body>
+</html>
