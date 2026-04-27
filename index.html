@@ -350,7 +350,7 @@ function renderStepBar() {
   bar.innerHTML = dimOrder.map((k, i) => {
     const firstQ = i * 6;
     const done = answers.slice(0, firstQ).every(a => a > 0);
-    const active = !done && (firstQ === 0 || answers.slice(0, firstQ).every(a => a > 0));
+    const active = !done && (firstQ === 0 || answers.slice(0, firstQ).every(a => a > 0)) && (firstQ === 0 || answers[firstQ - 1] > 0);
     let cls = 'step';
     if (active) cls += ' active';
     else if (done) cls += ' done';
@@ -359,6 +359,18 @@ function renderStepBar() {
       <span class="step-label">${dimNames[k]}</span>
     </div>`;
   }).join('');
+}
+
+function showScreen(n) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + n).classList.add('active');
+}
+
+function startQuiz() {
+  for (let i = 0; i < answers.length; i++) answers[i] = 0;
+  currentQ = 0;
+  showScreen(1);
+  renderQuestion();
 }
 
 function renderQuestion() {
