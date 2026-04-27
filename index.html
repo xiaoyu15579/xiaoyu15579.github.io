@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>大学生职业测评 - 小总秘</title>
+<title>职业兴趣测评 - 找到适合你的方向</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
@@ -41,6 +41,7 @@
     justify-content: space-between;
     margin-bottom: 28px;
     position: relative;
+    padding: 0 10px;
   }
   .step-bar::before {
     content: '';
@@ -58,7 +59,7 @@
     border-radius: 50%;
     background: #e0e0e0;
     display: flex; align-items: center; justify-content: center;
-    font-size: 13px; font-weight: 600; color: #999;
+    font-size: 12px; font-weight: 600; color: #999;
     position: relative; z-index: 1;
     transition: all 0.3s;
   }
@@ -66,7 +67,7 @@
   .step.done { background: #48bb78; color: #fff; }
   .step-label {
     position: absolute; top: 36px;
-    font-size: 11px; color: #aaa;
+    font-size: 10px; color: #aaa;
     white-space: nowrap;
     left: 50%; transform: translateX(-50%);
   }
@@ -134,10 +135,12 @@
   }
   .badge.r { background: #fecaca; color: #dc2626; }
   .badge.i { background: #fed7aa; color: #ea580c; }
-  .badge.a { background: #fecaca; color: #e11d48; }
+  .badge.a { background: #fbd5e5; color: #e11d48; }
   .badge.s { background: #bbf7d0; color: #16a34a; }
   .badge.e { background: #fef08a; color: #ca8a04; }
   .badge.c { background: #bfdbfe; color: #2563eb; }
+  .badge.d { background: #e9d5ff; color: #7c3aed; }
+  .badge.f { background: #fed7d7; color: #dc2626; }
 
   .career-list { list-style: none; }
   .career-list li {
@@ -149,8 +152,6 @@
     font-size: 14px; color: #333;
   }
   .career-list li small { display: block; color: #999; font-size: 12px; margin-top: 3px; }
-
-  .radar-container { max-width: 280px; margin: 0 auto 20px; }
 
   .progress-text {
     text-align: center;
@@ -168,29 +169,26 @@
 </head>
 <body>
 <div class="container" id="app">
-  <h1>🎯 大学生职业测评</h1>
-  <p class="subtitle">基于霍兰德职业兴趣理论 · 5 个维度 · 找出适合你的职业方向</p>
+  <h1>🎯 职业方向测评</h1>
+  <p class="subtitle">基于霍兰德职业兴趣理论扩展 · 8 个维度 · 帮你找到适合的专业和职业方向</p>
 
-  <!-- 步骤条 -->
   <div class="step-bar" id="stepBar"></div>
 
-  <!-- 开始页 -->
   <div class="screen active" id="screen-0">
     <div style="text-align:center;padding:30px 0;">
       <div style="font-size:64px;margin-bottom:16px;">🧭</div>
       <p style="font-size:16px;color:#555;line-height:1.8;margin-bottom:24px;">
-        不知道自己适合什么工作？<br>
+        不知道自己适合学什么专业、做什么工作？<br>
         这个测评从<strong>兴趣、技能、价值观、工作风格、学习偏好</strong><br>
-        五个维度帮你找到方向。
+        等多角度帮你全面认识自己。
       </p>
-      <p style="font-size:13px;color:#999;margin-bottom:28px;">共 25 题，约 5-8 分钟</p>
+      <p style="font-size:13px;color:#999;margin-bottom:28px;">共 48 题，约 8-12 分钟</p>
       <button class="btn btn-primary" onclick="startQuiz()" style="max-width:240px;margin:0 auto;">开始测评 →</button>
     </div>
   </div>
 
-  <!-- 答题页 -->
   <div class="screen" id="screen-1">
-    <div class="progress-text" id="progressText">第 1 / 25 题</div>
+    <div class="progress-text" id="progressText">第 1 / 48 题</div>
     <div id="questionArea"></div>
     <div class="nav-btns">
       <button class="btn btn-secondary" id="prevBtn" onclick="prevQuestion()">← 上一题</button>
@@ -198,7 +196,6 @@
     </div>
   </div>
 
-  <!-- 结果页 -->
   <div class="screen" id="screen-2">
     <div id="resultArea"></div>
     <div class="nav-btns" style="margin-top:12px;">
@@ -209,144 +206,166 @@
 </div>
 
 <script>
-// ========== 题库 ==========
-const dimensions = ['R','I','A','S','E','C'];
-const dimNames = { R:'实干型', I:'研究型', A:'艺术型', S:'社会型', E:'企业型', C:'常规型' };
-const dimColors = { R:'#dc2626', I:'#ea580c', A:'#e11d48', S:'#16a34a', E:'#ca8a04', C:'#2563eb' };
+const dimNames = {
+  R:'实干型', I:'研究型', A:'艺术型', S:'社会型',
+  E:'企业型', C:'常规型', D:'数字型', F:'灵活型'
+};
+const dimColors = {
+  R:'#dc2626', I:'#ea580c', A:'#e11d48', S:'#16a34a',
+  E:'#ca8a04', C:'#2563eb', D:'#7c3aed', F:'#dc2626'
+};
+const dimOrder = ['R','I','A','S','E','C','D','F'];
 
 const questions = [
-  // 兴趣维度 (1-5)
-  { d:'R', q:'我喜欢动手操作，比如修理东西、组装模型、做手工', cat:'兴趣' },
-  { d:'I', q:'我喜欢探索事物的原理，做实验、分析数据、解决逻辑难题', cat:'兴趣' },
-  { d:'A', q:'我喜欢创意表达，比如写作、画画、音乐、设计、摄影', cat:'兴趣' },
-  { d:'S', q:'我喜欢帮助别人，教别人东西、做志愿者、与人交流', cat:'兴趣' },
-  { d:'E', q:'我喜欢领导团队、说服别人、谈生意、组织活动', cat:'兴趣' },
+  // 实干型 R (6题)
+  { d:'R', q:'我喜欢动手修理或组装东西' },
+  { d:'R', q:'我擅长使用各种工具或设备' },
+  { d:'R', q:'户外作业比坐办公室更吸引我' },
+  { d:'R', q:'学东西时我喜欢先动手试一遍' },
+  { d:'R', q:'我对机械、电子、建筑类的东西感兴趣' },
+  { d:'R', q:'我不怕脏不怕累，愿意在一线干活' },
 
-  // 技能倾向 (6-10)
-  { d:'C', q:'我擅长整理数据、做表格、按流程完成任务', cat:'技能' },
-  { d:'R', q:'我擅长使用工具/设备，动手能力强', cat:'技能' },
-  { d:'I', q:'我擅长分析问题、做研究、查找资料', cat:'技能' },
-  { d:'A', q:'我擅长写作、表达、创意构思', cat:'技能' },
-  { d:'S', q:'我擅长倾听、沟通、协调人际关系', cat:'技能' },
+  // 研究型 I (6题)
+  { d:'I', q:'我喜欢探索事物背后的原理和规律' },
+  { d:'I', q:'我擅长分析数据和解决逻辑难题' },
+  { d:'I', q:'一个人静静思考问题让我很享受' },
+  { d:'I', q:'我喜欢看书查资料系统学习知识' },
+  { d:'I', q:'遇到问题我习惯先搞清楚原因再行动' },
+  { d:'I', q:'我对科学发现和技术进步很好奇' },
 
-  // 价值观 (11-15)
-  { d:'E', q:'对我来说，赚钱和获得成就感比什么都重要', cat:'价值观' },
-  { d:'S', q:'我希望工作能对社会有贡献，帮助到他人', cat:'价值观' },
-  { d:'C', q:'我喜欢稳定、有保障、规章制度明确的工作', cat:'价值观' },
-  { d:'I', q:'我追求专业深度，希望成为某个领域的专家', cat:'价值观' },
-  { d:'A', q:'我渴望自由发挥创意，不喜欢被条条框框束缚', cat:'价值观' },
+  // 艺术型 A (6题)
+  { d:'A', q:'我喜欢画画、写作、音乐、摄影等创作活动' },
+  { d:'A', q:'我擅长用有创意的方式表达自己的想法' },
+  { d:'A', q:'我不喜欢被死板的规定和流程约束' },
+  { d:'A', q:'在自由有美感的环境里我学得最好' },
+  { d:'A', q:'我觉得生活需要艺术和审美的点缀' },
+  { d:'A', q:'我经常有与众不同的想法和点子' },
 
-  // 工作风格 (16-20)
-  { d:'R', q:'我更喜欢和"物"打交道，而不是和"人"打交道', cat:'工作风格' },
-  { d:'S', q:'在团队中我通常是那个照顾大家情绪的人', cat:'工作风格' },
-  { d:'E', q:'我喜欢竞争，不怕压力，敢于冒险', cat:'工作风格' },
-  { d:'C', q:'我做事有条理，喜欢提前计划好每一步', cat:'工作风格' },
-  { d:'I', q:'我一个人专注做研究比参加热闹的社交活动更开心', cat:'工作风格' },
+  // 社会型 S (6题)
+  { d:'S', q:'我喜欢帮助别人解决困难' },
+  { d:'S', q:'我擅长倾听和安慰别人' },
+  { d:'S', q:'在团队中我常常是活跃气氛的那个人' },
+  { d:'S', q:'和别人讨论交流时我学得最快' },
+  { d:'S', q:'我希望工作能为社会做一些贡献' },
+  { d:'S', q:'我喜欢参加志愿者或公益活动' },
 
-  // 学习偏好 (21-25)
-  { d:'R', q:'我更喜欢通过动手实践来学习', cat:'学习偏好' },
-  { d:'I', q:'我喜欢看书、查文献，系统性地学习知识', cat:'学习偏好' },
-  { d:'A', q:'我通过画画、音乐、写作等方式表达自己时学得最好', cat:'学习偏好' },
-  { d:'S', q:'我和别人讨论、教别人的时候学得最快', cat:'学习偏好' },
-  { d:'E', q:'我喜欢参加比赛、项目实战，在实践中学习', cat:'学习偏好' },
+  // 企业型 E (6题)
+  { d:'E', q:'我喜欢领导团队和组织活动' },
+  { d:'E', q:'我擅长说服别人和谈判沟通' },
+  { d:'E', q:'我喜欢有竞争和挑战的环境' },
+  { d:'E', q:'在实战和实践中我学得最好' },
+  { d:'E', q:'赚钱和获得成就是我重要的动力' },
+  { d:'E', q:'我不怕冒险，愿意尝试新机会' },
+
+  // 常规型 C (6题)
+  { d:'C', q:'我喜欢按计划和流程有条理地做事' },
+  { d:'C', q:'我擅长整理数据和做表格' },
+  { d:'C', q:'稳定的工作环境让我更有安全感' },
+  { d:'C', q:'有条理地做笔记和复习效果最好' },
+  { d:'C', q:'我认为遵守规则和制度很重要' },
+  { d:'C', q:'我做事细心认真很少出错' },
+
+  // 数字型 D (6题)
+  { d:'D', q:'我对电脑、手机、互联网技术很感兴趣' },
+  { d:'D', q:'我学新软件和新工具上手很快' },
+  { d:'D', q:'我喜欢在网上搜索和学习新知识' },
+  { d:'D', q:'遇到技术问题我习惯自己研究解决' },
+  { d:'D', q:'我对编程、AI、短视频制作感兴趣' },
+  { d:'D', q:'我认为数字技能是未来各行各业的必备' },
+
+  // 灵活型 F (6题)
+  { d:'F', q:'我兴趣广泛，不愿意只做一件事' },
+  { d:'F', q:'我适应新环境和新变化很快' },
+  { d:'F', q:'重复单调的工作让我很难受' },
+  { d:'F', q:'我通过尝试不同方法来学习' },
+  { d:'F', q:'变化和未知反而让我有点兴奋' },
+  { d:'F', q:'我能同时处理好几件不同的事情' },
 ];
 
 const answers = new Array(questions.length).fill(0);
 
-// ========== 推荐职业 ==========
 const careerMap = {
   R: [
-    { title:'工程师（机械/电子/土木）', desc:'适合动手能力强的技术型人才' },
-    { title:'IT运维/网络工程师', desc:'计算机硬件和网络维护' },
-    { title:'技师/技术员', desc:'各类设备操作与维修' },
-    { title:'建筑/施工管理', desc:'工程建设相关岗位' },
-    { title:'无人机飞手/测绘员', desc:'新兴技术实操岗位' },
+    { title:'工程技术员', desc:'机械、电子、建筑工程等领域的技术岗位' },
+    { title:'汽修/维修技师', desc:'汽车维修、设备维护等实操型工作' },
+    { title:'建筑施工/监理', desc:'建筑工地现场管理、质量监督' },
+    { title:'电工/焊工/钳工', desc:'技术型蓝领，技能越老越吃香' },
+    { title:'无人机操作/测绘', desc:'新兴技术实操岗位，前景好' },
   ],
   I: [
-    { title:'数据分析师', desc:'Python/SQL 分析数据，互联网热门岗位' },
-    { title:'研究员/实验室技术员', desc:'科研机构或高校研究室' },
-    { title:'软件开发工程师', desc:'编程、算法、系统设计' },
-    { title:'金融分析师/风控', desc:'银行、证券、保险行业' },
-    { title:'医学/医药研发', desc:'医疗健康领域' },
+    { title:'数据分析师', desc:'用数据说话，互联网热门岗位' },
+    { title:'实验员/质检员', desc:'科研或企业实验室检测分析' },
+    { title:'程序员/软件开发', desc:'编程开发，IT行业核心岗位' },
+    { title:'金融风控/银行后台', desc:'金融行业分析类岗位' },
+    { title:'医学检验/医药研发', desc:'医疗健康领域技术岗' },
   ],
   A: [
-    { title:'新媒体运营/内容创作', desc:'短视频、公众号、小红书创作' },
-    { title:'UI/UX 设计师', desc:'互联网产品界面与交互设计' },
-    { title:'平面设计师/插画师', desc:'视觉传达相关工作' },
-    { title:'编导/视频剪辑', desc:'影视传媒行业' },
-    { title:'文案策划/广告创意', desc:'营销创意岗位' },
+    { title:'短视频编导/剪辑', desc:'短视频、直播行业内容创作' },
+    { title:'平面设计/UI设计', desc:'互联网产品视觉设计' },
+    { title:'新媒体运营', desc:'公众号、小红书、抖音内容运营' },
+    { title:'插画师/原画师', desc:'美术创作类职业' },
+    { title:'文案/广告策划', desc:'创意写作与营销策划' },
   ],
   S: [
-    { title:'教师/培训师', desc:'教育培训行业' },
-    { title:'人力资源HR', desc:'招聘、培训、员工关系' },
-    { title:'心理咨询师', desc:'心理健康服务' },
-    { title:'销售/客服管理', desc:'客户服务与关系维护' },
-    { title:'社区运营/社群管理', desc:'互联网社区运营' },
+    { title:'教师/培训师', desc:'教育培训行业，稳定有成就感' },
+    { title:'人力资源HR', desc:'招聘、培训、员工关系管理' },
+    { title:'护士/护理人员', desc:'医疗健康领域，社会需求大' },
+    { title:'社区工作者/社工', desc:'基层服务工作，稳中有升' },
+    { title:'客服/售后管理', desc:'互联网公司客户服务' },
   ],
   E: [
-    { title:'市场营销/品牌经理', desc:'品牌推广与营销策划' },
-    { title:'销售经理/商务拓展', desc:'企业销售与业务开发' },
-    { title:'创业者/项目经理', desc:'自主创业或项目管理' },
-    { title:'电商运营/直播运营', desc:'电商平台运营与管理' },
-    { title:'管理培训生', desc:'大企业管理层储备' },
+    { title:'市场营销/品牌推广', desc:'产品推广与品牌运营' },
+    { title:'电商运营/直播运营', desc:'电商平台运营管理' },
+    { title:'销售经理/商务BD', desc:'企业销售与客户开发' },
+    { title:'项目管理', desc:'统筹协调各类项目推进' },
+    { title:'创业者/个体经营', desc:'自己当老板' },
   ],
   C: [
-    { title:'会计/审计', desc:'财务管理相关工作' },
-    { title:'行政管理/文秘', desc:'企业行政办公管理' },
-    { title:'银行柜员/客服', desc:'银行业务操作' },
-    { title:'仓储物流管理', desc:'供应链与仓储管理' },
+    { title:'会计/出纳', desc:'财务管理相关工作，越做越精' },
+    { title:'行政文员/秘书', desc:'企业日常行政办公管理' },
+    { title:'银行柜员/大堂经理', desc:'银行业务操作与客户服务' },
+    { title:'仓储物流管理', desc:'供应链与仓库管理' },
     { title:'公务员/事业单位', desc:'稳定的体制内工作' },
+  ],
+  D: [
+    { title:'IT运维/网络管理', desc:'企业网络与系统维护' },
+    { title:'前端开发/网页制作', desc:'网站与应用界面开发' },
+    { title:'短视频运营/直播技术', desc:'直播推流、视频制作、账号运营' },
+    { title:'AI训练师/数据分析', desc:'人工智能数据处理与模型训练' },
+    { title:'网络安全工程师', desc:'信息安全管理，需求量大' },
+  ],
+  F: [
+    { title:'直播主播/带货主播', desc:'直播带货，表达能力强' },
+    { title:'活动策划/会展策划', desc:'各类活动统筹策划' },
+    { title:'销售代表/市场推广', desc:'跑市场，挑战与收入并存' },
+    { title:'自由职业者', desc:'自媒体、设计、摄影等自由发展' },
+    { title:'创业合伙人', desc:'与人合伙创业，互补共赢' },
   ],
 };
 
-// ========== 渲染 ==========
+let currentQ = 0;
+
 function renderStepBar() {
-  const steps = ['开始','兴趣','技能','价值观','风格','偏好','结果'];
   const bar = document.getElementById('stepBar');
-  // determine active step
-  const activeIdx = getCurrentStepIndex();
-  bar.innerHTML = steps.map((s,i) => {
+  bar.innerHTML = dimOrder.map((k, i) => {
+    const firstQ = i * 6;
+    const done = answers.slice(0, firstQ).every(a => a > 0);
+    const active = !done && (firstQ === 0 || answers.slice(0, firstQ).every(a => a > 0));
     let cls = 'step';
-    if (i === activeIdx) cls += ' active';
-    else if (i < activeIdx) cls += ' done';
-    return `<div class="${cls}" style="position:relative;">
-      ${i < activeIdx ? '✓' : (i === 0 ? '🏠' : i)}
-      <span class="step-label">${s}</span>
+    if (active) cls += ' active';
+    else if (done) cls += ' done';
+    return `<div class="${cls}" style="background:${done?dimColors[k]:active?dimColors[k]:'#e0e0e0'};">
+      ${done ? '✓' : (i + 1)}
+      <span class="step-label">${dimNames[k]}</span>
     </div>`;
   }).join('');
 }
 
-function getCurrentStepIndex() {
-  const qIdx = answers.findIndex(a => a === 0);
-  if (qIdx === -1 || qIdx >= questions.length) return 6;
-  // 5 dimensions: 5 questions each
-  // step 1: 0-4, step 2: 5-9, step 3: 10-14, step 4: 15-19, step 5: 20-24
-  if (qIdx < 5) return 1;
-  if (qIdx < 10) return 2;
-  if (qIdx < 15) return 3;
-  if (qIdx < 20) return 4;
-  return 5;
-}
-
-// ========== 导航 ==========
-let currentQ = 0;
-
-function startQuiz() {
-  // reset
-  for (let i = 0; i < answers.length; i++) answers[i] = 0;
-  currentQ = 0;
-  showScreen(1);
-  renderQuestion();
-}
-
-function showScreen(n) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById('screen-' + n).classList.add('active');
-}
-
 function renderQuestion() {
   const q = questions[currentQ];
-  document.getElementById('progressText').textContent = `第 ${currentQ + 1} / ${questions.length} 题 · ${q.cat}`;
+  const dim = currentQ;
+  const dimNum = Math.floor(dim / 6) + 1;
+  document.getElementById('progressText').textContent = `第 ${currentQ + 1} / ${questions.length} 题 · ${dimNames[q.d]}`;
 
   const html = `
     <div class="question">
@@ -374,9 +393,7 @@ function renderQuestion() {
 
 function selectAnswer(idx, val) {
   answers[idx] = val;
-  // Re-render to update UI
-  const radios = document.querySelectorAll(`input[name="q${idx}"]`);
-  radios.forEach(r => {
+  document.querySelectorAll(`input[name="q${idx}"]`).forEach(r => {
     if (+r.value === val) r.parentElement.classList.add('selected');
     else r.parentElement.classList.remove('selected');
   });
@@ -385,10 +402,7 @@ function selectAnswer(idx, val) {
 
 function nextQuestion() {
   if (answers[currentQ] === 0) return;
-  if (currentQ === questions.length - 1) {
-    showResults();
-    return;
-  }
+  if (currentQ === questions.length - 1) { showResults(); return; }
   currentQ++;
   renderQuestion();
 }
@@ -399,42 +413,38 @@ function prevQuestion() {
   renderQuestion();
 }
 
-// ========== 结果计算 ==========
 function calcResults() {
-  const scores = { R:0, I:0, A:0, S:0, E:0, C:0 };
+  const scores = {};
+  dimOrder.forEach(k => scores[k] = 0);
   questions.forEach((q, i) => {
     if (answers[i] > 0) scores[q.d] += answers[i];
   });
-  // normalize to percentage
-  const maxScore = 25; // 5 questions * 5 points
-  Object.keys(scores).forEach(k => scores[k] = Math.round(scores[k] / maxScore * 100));
-
-  // sort
-  const sorted = Object.entries(scores).sort((a,b) => b[1] - a[1]);
+  const maxScore = 30;
+  dimOrder.forEach(k => scores[k] = Math.round(scores[k] / maxScore * 100));
+  const sorted = dimOrder.map(k => [k, scores[k]]).sort((a,b) => b[1] - a[1]);
   const top3 = sorted.slice(0, 3).map(s => s[0]);
-
   return { scores, sorted, top3, fullCode: top3.join('') };
 }
 
 function showResults() {
-  showScreen(2);
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-2').classList.add('active');
   renderStepBar();
 
   const { scores, sorted, top3, fullCode } = calcResults();
 
-  // radar chart as simple bars
   let radarHTML = `<div style="display:flex;flex-direction:column;gap:8px;padding:0 10px;">`;
-  ['R','I','A','S','E','C'].forEach(k => {
+  dimOrder.forEach(k => {
     const pct = scores[k];
     const isTop = top3.includes(k);
     radarHTML += `
       <div style="display:flex;align-items:center;gap:10px;">
-        <span style="width:44px;font-size:14px;font-weight:${isTop?'700':'400'};color:${isTop?dimColors[k]:'#888'};">
-          ${dimNames[k]} (${k})
+        <span style="width:52px;font-size:13px;font-weight:${isTop?'700':'400'};color:${isTop?dimColors[k]:'#888'};">
+          ${dimNames[k]}
         </span>
         <div style="flex:1;height:22px;background:#eee;border-radius:11px;overflow:hidden;">
-          <div style="height:100%;width:${pct}%;background:${dimColors[k]};border-radius:11px;transition:width 1s;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;font-weight:600;${pct<15?'color:#666;':''}">
-            ${pct > 10 ? pct + '%' : ''}
+          <div style="height:100%;width:${pct}%;background:${dimColors[k]};border-radius:11px;transition:width 1s;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;font-weight:600;">
+            ${pct > 8 ? pct + '%' : ''}
           </div>
         </div>
       </div>
@@ -442,18 +452,15 @@ function showResults() {
   });
   radarHTML += `</div>`;
 
-  // Top 3 badges
-  const badgesHTML = sorted.slice(0,3).map(([k,v]) => 
-    `<span class="badge ${k.toLowerCase()}">${dimNames[k]} (${k}) ${scores[k]}%</span>`
+  const badgesHTML = sorted.slice(0,3).map(([k,v]) =>
+    `<span class="badge ${k.toLowerCase()}">${dimNames[k]} ${scores[k]}%</span>`
   ).join(' ');
 
-  // Career suggestions for top type
   const careersHTML = top3.map(k => {
     const jobs = careerMap[k];
-    if (!jobs) return '';
     return `
       <div class="result-section" style="border-left:4px solid ${dimColors[k]};">
-        <div class="result-title" style="color:${dimColors[k]};">${dimNames[k]} (${k}) — 推荐职业</div>
+        <div class="result-title" style="color:${dimColors[k]};">${dimNames[k]} — 推荐方向</div>
         <ul class="career-list">
           ${jobs.map(j => `<li><strong>${j.title}</strong><small>${j.desc}</small></li>`).join('')}
         </ul>
@@ -461,14 +468,15 @@ function showResults() {
     `;
   }).join('');
 
-  // Interpretation
   const interpretMap = {
-    R: '你属于<strong>实干型</strong>——动手能力强，喜欢具体明确的任务。适合工程技术类、实操类职业。',
-    I: '你属于<strong>研究型</strong>——爱思考、爱分析，喜欢独立解决复杂问题。适合科研、数据分析、技术开发。',
-    A: '你属于<strong>艺术型</strong>——有创意、有想法，追求自我表达。适合设计、内容创作、传媒行业。',
-    S: '你属于<strong>社会型</strong>——乐于助人、善于沟通，温暖有同理心。适合教育、咨询、人力资源。',
-    E: '你属于<strong>企业型</strong>——有野心、有魄力，喜欢领导和竞争。适合销售、管理、创业。',
-    C: '你属于<strong>常规型</strong>——细致严谨、有条不紊，喜欢稳定和规则。适合财务、行政、公务员。',
+    R: '你偏向<strong>实干型</strong>——喜欢动手、接触实物，适合技术操作类、户外/现场类工作。可以考虑汽修、电工、建筑、无人机等实操技术方向。',
+    I: '你偏向<strong>研究型</strong>——喜欢思考分析，适合需要逻辑思维和研究能力的工作。适合数据分析、编程、实验室、金融分析等岗位。',
+    A: '你偏向<strong>艺术型</strong>——有创意、爱表达，适合需要创造力和审美力的工作。适合设计、新媒体、编导、文案等创意类岗位。',
+    S: '你偏向<strong>社会型</strong>——乐于助人、善于沟通，适合与人打交道的工作。适合教育、人力资源、护理、社工等社会服务类岗位。',
+    E: '你偏向<strong>企业型</strong>——有目标、敢拼敢闯，适合需要领导力和商业头脑的工作。适合销售、运营、创业、项目管理等岗位。',
+    C: '你偏向<strong>常规型</strong>——细致有条理，适合规范化、系统化的工作。适合会计、行政、银行、公务员等稳定岗位。',
+    D: '你偏向<strong>数字型</strong>——对科技敏感，适合互联网、数字化领域的工作。适合IT运维、前端开发、AI训练、短视频技术等岗位。',
+    F: '你偏向<strong>灵活型</strong>——兴趣广泛、适应力强，适合需要应变和多元能力的工作。适合直播、策划、销售、自由职业等灵活岗位。',
   };
 
   document.getElementById('resultArea').innerHTML = `
@@ -487,7 +495,8 @@ function showResults() {
       <div class="result-title">💡 解读</div>
       <div class="result-desc">
         <p style="margin-bottom:12px;">你的主要类型为：<strong>${dimNames[top3[0]]}</strong>，次要类型为 <strong>${dimNames[top3[1]]}</strong> 和 <strong>${dimNames[top3[2]]}</strong>。</p>
-        <p>${interpretMap[top3[0]] || ''}</p>
+        <p>${interpretMap[top3[0]]}</p>
+        <p style="margin-top:10px;">${interpretMap[top3[1]]}</p>
       </div>
     </div>
 
@@ -496,10 +505,10 @@ function showResults() {
     <div class="result-section" style="background:#f0f9ff;">
       <div class="result-title">📝 给你的建议</div>
       <div class="result-desc">
-        <p style="margin-bottom:8px;">1️⃣ <strong>不用太局限</strong> — 测评结果是参考，不是定论。你的兴趣和能力会随着经历增长而变化。</p>
-        <p style="margin-bottom:8px;">2️⃣ <strong>行动起来</strong> — 找相关专业的学长学姐聊聊，或者到大二大三争取一份实习，亲身体验才知道适不适合。</p>
-        <p style="margin-bottom:8px;">3️⃣ <strong>组合发展</strong> — 最强的竞争力往往来自跨领域能力组合。比如"技术+沟通"、"创意+执行"。</p>
-        <p>4️⃣ <strong>没关系反复测</strong> — 隔半年再测一次，看看自己的变化趋势 😄</p>
+        <p style="margin-bottom:8px;">1️⃣ <strong>测评是参考，不是定论</strong> — 你的兴趣和能力会随着经历而成长，别把自己框死。</p>
+        <p style="margin-bottom:8px;">2️⃣ <strong>有方向就行动</strong> — 找这个方向的学长学姐聊聊，有机会的话实习/兼职体验一下。</p>
+        <p style="margin-bottom:8px;">3️⃣ <strong>组合最吃香</strong> — 最强的竞争力来自能力组合，比如"技术+沟通"、"创意+执行"。</p>
+        <p>4️⃣ <strong>过段时间再测一次</strong> — 看看自己的变化，了解自己的成长轨迹 😄</p>
       </div>
     </div>
   `;
