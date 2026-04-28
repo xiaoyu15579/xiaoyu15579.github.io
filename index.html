@@ -73,8 +73,15 @@
   }
   .step.active .step-label, .step.done .step-label { color: #667eea; font-weight: 600; }
 
-  .screen { display: none; }
-  .screen.active { display: block; }
+  .screen { display: none; opacity: 0; transition: opacity 0.25s ease; }
+  .screen.active { display: block; opacity: 1; }
+
+  @media print {
+    body { background: #fff; padding: 0; }
+    .container { box-shadow: none; margin: 0; border-radius: 0; }
+    .nav-btns, .step-bar, #prevBtn, #nextBtn, .btn, [style*="ad"] { display: none !important; }
+    .result-section { break-inside: avoid; page-break-inside: avoid; }
+  }
 
   .question { margin-bottom: 18px; }
   .question-text {
@@ -165,15 +172,26 @@
     .opt-btn { min-width: 44px; padding: 8px 6px; font-size: 12px; }
     h1 { font-size: 22px; }
   }
+
+  /* 个人信息页 */
+  .info-section { margin-bottom: 20px; padding: 16px; background: #f8f9ff; border-radius: 16px; }
+  .info-label { font-size: 15px; font-weight: 600; color: #444; margin-bottom: 12px; }
+  .info-opts { display: flex; gap: 10px; flex-wrap: wrap; }
+  .info-btn { flex: 1; min-width: 80px; padding: 12px 16px; border: 2px solid #e0e0e0; border-radius: 12px; background: #fff; text-align: center; font-size: 14px; color: #666; cursor: pointer; transition: all 0.2s; }
+  .info-btn:hover { border-color: #667eea; background: #f0f2ff; }
+  .info-btn.selected { border-color: #667eea; background: #667eea; color: #fff; font-weight: 600; }
+  .plan-option { background:#fff; border:2px solid #e8e8e8; border-radius:14px; padding:16px 18px; margin-bottom:10px; cursor:pointer; transition:all 0.2s; }
+  .plan-option:hover { border-color:#667eea; }
 </style>
 </head>
 <body>
 <div class="container" id="app">
   <h1>🎯 职业方向测评</h1>
-  <p class="subtitle">基于霍兰德职业兴趣理论扩展 · 8 个维度 · 帮你找到适合的专业和职业方向</p>
+  <p class="subtitle">8个维度帮你自我分析 · 帮你找到适合的专业和职业方向</p>
 
   <div class="step-bar" id="stepBar"></div>
 
+  <!-- 欢迎页 -->
   <div class="screen active" id="screen-0">
     <div style="text-align:center;padding:30px 0;">
       <div style="font-size:64px;margin-bottom:16px;">🧭</div>
@@ -182,11 +200,315 @@
         这个测评从<strong>兴趣、技能、价值观、工作风格、学习偏好</strong><br>
         等多角度帮你全面认识自己。
       </p>
-      <p style="font-size:13px;color:#999;margin-bottom:28px;">共 48 题，约 8-12 分钟</p>
-      <button class="btn btn-primary" onclick="startQuiz()" style="max-width:240px;margin:0 auto;">开始测评 →</button>
+      <p style="font-size:13px;color:#999;margin-bottom:16px;">共 48 题，约 8-12 分钟</p>
+      <div style="font-size:11px;color:#ddd;margin-bottom:12px;">v4.0</div>
+      <button class="btn btn-primary" onclick="showInfoPage()" style="max-width:240px;margin:0 auto;">开始测评 →</button>
     </div>
   </div>
 
+  <!-- 个人信息页 -->
+  <div class="screen" id="screen-info">
+    <h2 style="text-align:center;font-size:22px;margin-bottom:6px;">📋 填写基本信息</h2>
+    <p style="text-align:center;color:#999;font-size:13px;margin-bottom:24px;">让测评结果更贴合你的实际情况</p>
+
+    <div class="info-section">
+      <div class="info-label">性别</div>
+      <div class="info-opts">
+        <label class="info-btn" onclick="selectInfo('gender','男')"><input type="radio" name="gender" value="男" hidden> 👦 男</label>
+        <label class="info-btn" onclick="selectInfo('gender','女')"><input type="radio" name="gender" value="女" hidden> 👧 女</label>
+      </div>
+    </div>
+
+    <div class="info-section">
+      <div class="info-label">性格倾向</div>
+      <div class="info-opts">
+        <label class="info-btn" onclick="selectInfo('personality','内向')"><input type="radio" name="personality" value="内向" hidden> 🤫 偏内向</label>
+        <label class="info-btn" onclick="selectInfo('personality','外向')"><input type="radio" name="personality" value="外向" hidden> 🗣️ 偏外向</label>
+      </div>
+    </div>
+
+    <div class="info-section">
+      <div class="info-label">学历</div>
+      <div class="info-opts">
+        <label class="info-btn" onclick="selectInfo('edu','高中/中专')"><input type="radio" name="edu" value="高中/中专" hidden>高中/中专</label>
+        <label class="info-btn" onclick="selectInfo('edu','大专')"><input type="radio" name="edu" value="大专" hidden>大专</label>
+        <label class="info-btn" onclick="selectInfo('edu','本科')"><input type="radio" name="edu" value="本科" hidden>本科</label>
+      </div>
+    </div>
+
+    <div class="info-section">
+      <div class="info-label">意向（就读）专业/方向 <span style="color:#ccc;font-weight:400;">（选填）</span></div>
+      <select id="majorInput" style="width:100%;padding:12px 14px;border:2px solid #e0e0e0;border-radius:12px;font-size:14px;outline:none;background:#fafafa;color:#666;appearance:auto;cursor:pointer;" onchange="userInfo.major=this.value;selectInfo('major',this.value)" onfocus="this.style.borderColor='#667eea';this.style.background='#fff'" onblur="this.style.borderColor='#e0e0e0';this.style.background='#fafafa'">
+        <option value="">— 请选择专业（必选）—</option>
+        <optgroup label="📱 电子信息/计算机类">
+          <option value="计算机应用技术">计算机应用技术</option>
+          <option value="软件技术">软件技术</option>
+          <option value="大数据技术">大数据技术</option>
+          <option value="人工智能技术应用">人工智能技术应用</option>
+          <option value="计算机网络技术">计算机网络技术</option>
+          <option value="数字媒体技术">数字媒体技术</option>
+          <option value="物联网应用技术">物联网应用技术</option>
+          <option value="云计算技术应用">云计算技术应用</option>
+          <option value="信息安全技术">信息安全技术应用</option>
+          <option value="移动应用开发">移动应用开发</option>
+          <option value="通信技术">通信技术</option>
+          <option value="电子信息工程技术">电子信息工程技术</option>
+          <option value="应用电子技术">应用电子技术</option>
+          <option value="智能产品开发">智能产品开发</option>
+          <option value="集成电路技术">集成电路技术</option>
+          <option value="工业互联网技术">工业互联网技术</option>
+          <option value="嵌入式技术应用">嵌入式技术应用</option>
+          <option value="区块链技术">区块链技术应用</option>
+          <option value="虚拟现实技术">虚拟现实技术应用</option>
+          <option value="计算机科学与技术(本)">计算机科学与技术（本科）</option>
+          <option value="软件工程(本)">软件工程（本科）</option>
+          <option value="数据科学与大数据(本)">数据科学与大数据技术（本科）</option>
+          <option value="人工智能(本)">人工智能（本科）</option>
+          <option value="网络工程(本)">网络工程（本科）</option>
+          <option value="物联网工程(本)">物联网工程（本科）</option>
+        </optgroup>
+        <optgroup label="🏥 医药卫生类">
+          <option value="护理">护理</option>
+          <option value="助产">助产</option>
+          <option value="药学">药学</option>
+          <option value="中药学">中药学</option>
+          <option value="医学检验技术">医学检验技术</option>
+          <option value="医学影像技术">医学影像技术</option>
+          <option value="口腔医学技术">口腔医学技术</option>
+          <option value="康复治疗技术">康复治疗技术</option>
+          <option value="眼视光技术">眼视光技术</option>
+          <option value="临床医学(本)">临床医学（本科）</option>
+          <option value="口腔医学(本)">口腔医学（本科）</option>
+          <option value="中医学(本)">中医学（本科）</option>
+          <option value="针灸推拿">针灸推拿</option>
+          <option value="医学美容技术">医学美容技术</option>
+          <option value="药品经营与管理">药品经营与管理</option>
+          <option value="生物制药技术">生物制药技术</option>
+          <option value="医疗器械维护">医疗器械维护与管理</option>
+          <option value="健康管理">健康管理</option>
+          <option value="老年保健与管理">老年保健与管理</option>
+          <option value="中医养生保健">中医养生保健</option>
+          <option value="预防医学(本)">预防医学（本科）</option>
+          <option value="医学影像学(本)">医学影像学（本科）</option>
+          <option value="麻醉学(本)">麻醉学（本科）</option>
+          <option value="儿科学(本)">儿科学（本科）</option>
+          <option value="护理学(本)">护理学（本科）</option>
+        </optgroup>
+        <optgroup label="🔧 装备制造/工程技术类">
+          <option value="机电一体化技术">机电一体化技术</option>
+          <option value="电气自动化技术">电气自动化技术</option>
+          <option value="工业机器人技术">工业机器人技术</option>
+          <option value="数控技术">数控技术</option>
+          <option value="模具设计与制造">模具设计与制造</option>
+          <option value="新能源汽车技术">新能源汽车技术</option>
+          <option value="汽车检测与维修">汽车检测与维修技术</option>
+          <option value="无人机应用技术">无人机应用技术</option>
+          <option value="智能控制技术">智能控制技术</option>
+          <option value="机械设计与制造">机械设计与制造</option>
+          <option value="汽车制造与试验">汽车制造与试验技术</option>
+          <option value="铁道机车车辆">铁道机车车辆制造与维护</option>
+          <option value="船舶工程技术">船舶工程技术</option>
+          <option value="航空机电维修">航空机电设备维修</option>
+          <option value="自动化(本)">自动化（本科）</option>
+          <option value="机械工程(本)">机械工程（本科）</option>
+          <option value="电气工程(本)">电气工程及其自动化（本科）</option>
+          <option value="车辆工程(本)">车辆工程（本科）</option>
+          <option value="材料科学与工程(本)">材料科学与工程（本科）</option>
+          <option value="测控技术与仪器">测控技术与仪器</option>
+          <option value="焊接技术与自动化">焊接技术与自动化</option>
+          <option value="电梯工程技术">电梯工程技术</option>
+        </optgroup>
+        <optgroup label="🏗️ 土木建筑/交通类">
+          <option value="建筑工程技术">建筑工程技术</option>
+          <option value="工程造价">工程造价</option>
+          <option value="建设工程管理">建设工程管理</option>
+          <option value="建筑装饰技术">建筑装饰工程技术</option>
+          <option value="市政工程技术">市政工程技术</option>
+          <option value="道路桥梁技术">道路桥梁工程技术</option>
+          <option value="工程测量技术">工程测量技术</option>
+          <option value="铁道工程技术">铁道工程技术</option>
+          <option value="城市轨道交通">城市轨道交通运营管理</option>
+          <option value="高速铁路客运">高速铁路客运服务</option>
+          <option value="建筑设计">建筑设计</option>
+          <option value="城乡规划">城乡规划</option>
+          <option value="给排水工程">给排水工程技术</option>
+          <option value="土木工程(本)">土木工程（本科）</option>
+          <option value="建筑学(本)">建筑学（本科）</option>
+          <option value="工程管理(本)">工程管理（本科）</option>
+          <option value="水利工程">水利工程</option>
+          <option value="消防工程技术">消防工程技术</option>
+        </optgroup>
+        <optgroup label="🎨 文化艺术/设计类">
+          <option value="视觉传达设计">视觉传达设计</option>
+          <option value="环境艺术设计">环境艺术设计</option>
+          <option value="室内艺术设计">室内艺术设计</option>
+          <option value="动漫制作技术">动漫制作技术</option>
+          <option value="服装与服饰设计">服装与服饰设计</option>
+          <option value="广告设计与制作">广告设计与制作</option>
+          <option value="摄影摄像技术">摄影摄像技术</option>
+          <option value="游戏艺术设计">游戏艺术设计</option>
+          <option value="数字媒体艺术">数字媒体艺术设计</option>
+          <option value="产品艺术设计">产品艺术设计</option>
+          <option value="工艺美术品设计">工艺美术品设计</option>
+          <option value="陶瓷设计与工艺">陶瓷设计与工艺</option>
+          <option value="人物形象设计">人物形象设计</option>
+          <option value="音乐表演">音乐表演</option>
+          <option value="舞蹈表演">舞蹈表演</option>
+          <option value="美术教育">美术教育</option>
+          <option value="音乐教育">音乐教育</option>
+          <option value="艺术设计(本)">艺术设计学（本科）</option>
+          <option value="美术学(本)">美术学（本科）</option>
+          <option value="音乐学(本)">音乐学（本科）</option>
+        </optgroup>
+        <optgroup label="💰 财经商贸类">
+          <option value="大数据与会计">大数据与会计</option>
+          <option value="大数据与财务管理">大数据与财务管理</option>
+          <option value="大数据与审计">大数据与审计</option>
+          <option value="市场营销">市场营销</option>
+          <option value="电子商务">电子商务</option>
+          <option value="跨境电子商务">跨境电子商务</option>
+          <option value="现代物流管理">现代物流管理</option>
+          <option value="旅游管理">旅游管理</option>
+          <option value="酒店管理与数字化运营">酒店管理与数字化运营</option>
+          <option value="金融管理">金融服务与管理</option>
+          <option value="国际经济与贸易">国际经济与贸易</option>
+          <option value="工商企业管理">工商企业管理</option>
+          <option value="人力资源管理">人力资源管理</option>
+          <option value="行政管理">行政管理</option>
+          <option value="连锁经营与管理">连锁经营与管理</option>
+          <option value="商务英语">商务英语</option>
+          <option value="网络营销">网络营销与直播电商</option>
+          <option value="现代家政管理">现代家政服务与管理</option>
+          <option value="会计学(本)">会计学（本科）</option>
+          <option value="金融学(本)">金融学（本科）</option>
+          <option value="财务管理(本)">财务管理（本科）</option>
+          <option value="工商管理(本)">工商管理（本科）</option>
+          <option value="国际经济与贸易(本)">国际经济与贸易（本科）</option>
+          <option value="税收学(本)">税收学（本科）</option>
+        </optgroup>
+        <optgroup label="👩‍🏫 教育/体育类">
+          <option value="学前教育">学前教育</option>
+          <option value="小学教育">小学教育</option>
+          <option value="早期教育">早期教育</option>
+          <option value="英语教育">小学英语教育</option>
+          <option value="体育教育">体育教育</option>
+          <option value="音乐教育">音乐教育（师范）</option>
+          <option value="美术教育">美术教育（师范）</option>
+          <option value="舞蹈教育">舞蹈教育</option>
+          <option value="特殊教育">特殊教育</option>
+          <option value="现代教育技术">现代教育技术</option>
+          <option value="心理健康教育">心理健康教育</option>
+          <option value="社会体育">社会体育</option>
+          <option value="运动训练">运动训练</option>
+          <option value="体能训练">体能训练</option>
+          <option value="教育学(本)">教育学（本科）</option>
+          <option value="学前教育(本)">学前教育（本科）</option>
+          <option value="小学教育(本)">小学教育（本科）</option>
+          <option value="体育教育(本)">体育教育（本科）</option>
+          <option value="汉语言文学(本)">汉语言文学（师范·本科）</option>
+          <option value="英语(本)">英语（师范·本科）</option>
+          <option value="数学与应用数学(本)">数学与应用数学（师范·本科）</option>
+        </optgroup>
+        <optgroup label="🌾 农林牧渔类">
+          <option value="园林技术">园林技术</option>
+          <option value="园艺技术">园艺技术</option>
+          <option value="畜牧兽医">畜牧兽医</option>
+          <option value="宠物医疗技术">宠物医疗技术</option>
+          <option value="动物医学(本)">动物医学（本科）</option>
+          <option value="现代农业技术">现代农业技术</option>
+          <option value="茶艺与茶文化">茶艺与茶文化</option>
+          <option value="食品检验检测">食品检验检测技术</option>
+          <option value="食品质量与安全">食品质量与安全</option>
+          <option value="烹饪工艺与营养">烹饪工艺与营养</option>
+          <option value="酿酒技术">酿酒技术</option>
+          <option value="林业技术">林业技术</option>
+          <option value="水产养殖技术">水产养殖技术</option>
+          <option value="种子生产与经营">种子生产与经营</option>
+          <option value="农学(本)">农学（本科）</option>
+          <option value="园林(本)">园林（本科）</option>
+          <option value="食品科学与工程(本)">食品科学与工程（本科）</option>
+        </optgroup>
+        <optgroup label="📡 新闻传播/影视传媒类">
+          <option value="新闻采编与制作">新闻采编与制作</option>
+          <option value="播音与主持">播音与主持</option>
+          <option value="影视编导">影视编导</option>
+          <option value="网络直播与运营">网络直播与运营</option>
+          <option value="全媒体广告策划">全媒体广告策划与营销</option>
+          <option value="传播与策划">传播与策划</option>
+          <option value="广播影视节目制作">广播影视节目制作</option>
+          <option value="影视动画">影视动画</option>
+          <option value="融媒体技术与运营">融媒体技术与运营</option>
+          <option value="新闻学(本)">新闻学（本科）</option>
+          <option value="广播电视编导(本)">广播电视编导（本科）</option>
+          <option value="网络与新媒体(本)">网络与新媒体（本科）</option>
+        </optgroup>
+        <optgroup label="✈️ 交通运输/服务类">
+          <option value="空中乘务">空中乘务</option>
+          <option value="高速铁路客运服务">高速铁路客运服务</option>
+          <option value="城市轨道交通运营">城市轨道交通运营管理</option>
+          <option value="民航运输服务">民航运输服务</option>
+          <option value="机场运行服务">机场运行服务与管理</option>
+          <option value="国际邮轮乘务">国际邮轮乘务管理</option>
+          <option value="旅游管理">旅游管理</option>
+          <option value="导游">导游</option>
+          <option value="研学旅行服务">研学旅行管理与服务</option>
+          <option value="会展策划与管理">会展策划与管理</option>
+          <option value="智慧健康养老">智慧健康养老服务与管理</option>
+          <option value="现代殡葬技术">现代殡葬技术与管理</option>
+        </optgroup>
+        <optgroup label="⚖️ 法律/公共管理类">
+          <option value="法律事务">法律事务</option>
+          <option value="法律文秘">法律文秘</option>
+          <option value="司法警务">司法警务</option>
+          <option value="社会工作">社会工作</option>
+          <option value="社区管理与服务">社区管理与服务</option>
+          <option value="行政管理">行政管理</option>
+          <option value="劳动与社会保障">劳动与社会保障</option>
+          <option value="公共事务管理">公共事务管理</option>
+          <option value="法学(本)">法学（本科）</option>
+          <option value="社会工作(本)">社会工作（本科）</option>
+          <option value="思想政治教育(本)">思想政治教育（师范·本科）</option>
+        </optgroup>
+        <optgroup label="🌐 语言/文秘类">
+          <option value="商务英语">商务英语</option>
+          <option value="应用英语">应用英语</option>
+          <option value="应用日语">应用日语</option>
+          <option value="应用韩语">应用韩语</option>
+          <option value="应用法语">应用法语</option>
+          <option value="中文">中文（文秘方向）</option>
+          <option value="现代文秘">现代文秘</option>
+          <option value="汉语言文学(本)">汉语言文学（本科）</option>
+          <option value="英语(本)">英语（本科）</option>
+          <option value="日语(本)">日语（本科）</option>
+        </optgroup>
+        <optgroup label="🧪 理学/基础学科(本)">
+          <option value="数学与应用数学(本)">数学与应用数学（本科）</option>
+          <option value="物理学(本)">物理学（本科）</option>
+          <option value="化学(本)">化学（本科）</option>
+          <option value="生物科学(本)">生物科学（本科）</option>
+          <option value="地理科学(本)">地理科学（本科）</option>
+          <option value="心理学(本)">心理学（本科）</option>
+          <option value="统计学(本)">统计学（本科）</option>
+          <option value="应用化学(本)">应用化学（本科）</option>
+          <option value="应用心理学(本)">应用心理学（本科）</option>
+        </optgroup>
+        <optgroup label="🏛️ 哲学/历史学(本)">
+          <option value="哲学(本)">哲学（本科）</option>
+          <option value="历史学(本)">历史学（本科）</option>
+          <option value="考古学(本)">考古学（本科）</option>
+          <option value="文物修复">文物修复与保护</option>
+        </optgroup>
+      </select>
+    </div>
+
+    <div class="nav-btns" style="margin-top:32px;">
+      <button class="btn btn-secondary" onclick="showStart()">← 返回</button>
+      <button class="btn btn-primary" id="startQuizBtn" onclick="startQuiz()" disabled>开始答题 →</button>
+    </div>
+    <p style="text-align:center;font-size:12px;color:#ccc;margin-top:10px;" id="infoHint">请先选择性别、性格和学历</p>
+  </div>
+
+  <!-- 学历后续规划页 -->
   <div class="screen" id="screen-1">
     <div class="progress-text" id="progressText">第 1 / 48 题</div>
     <div id="questionArea"></div>
@@ -194,12 +516,22 @@
       <button class="btn btn-secondary" id="prevBtn" onclick="prevQuestion()">← 上一题</button>
       <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">下一题 →</button>
     </div>
+    <!-- 答题区引导 + 广告位 -->
+    <div style="margin-top:20px;">
+      <div style="padding:14px 20px;border-radius:12px;background:linear-gradient(135deg,#667eea08,#764ba208);text-align:center;margin-bottom:10px;">
+        <div style="font-size:13px;color:#667eea;font-weight:500;">🎯 测完之后有详细职业推荐 + 针对你专业的具体岗位</div>
+      </div>
+      <div style="padding:12px 20px;border-radius:12px;border:1.5px dashed #ddd;text-align:center;">
+        <div style="font-size:12px;font-weight:600;color:#bbb;letter-spacing:2px;">— 广告位招租 —</div>
+        <div style="font-size:11px;color:#ccc;margin-top:4px;">📢 合作联系：18779263395（微信同号）</div>
+      </div>
+    </div>
   </div>
 
   <div class="screen" id="screen-2">
     <div id="resultArea"></div>
     <div class="nav-btns" style="margin-top:12px;">
-      <button class="btn btn-secondary" onclick="startQuiz()">重新测评</button>
+      <button class="btn btn-secondary" onclick="showInfoPage()">重新测评</button>
       <button class="btn btn-primary" onclick="window.print()">🖨️ 打印/保存</button>
     </div>
   </div>
@@ -216,132 +548,821 @@ const dimColors = {
 };
 const dimOrder = ['R','I','A','S','E','C','D','F'];
 
-const questions = [
-  // 实干型 R (6题)
-  { d:'R', q:'我喜欢动手修理或组装东西' },
-  { d:'R', q:'我擅长使用各种工具或设备' },
-  { d:'R', q:'户外作业比坐办公室更吸引我' },
-  { d:'R', q:'学东西时我喜欢先动手试一遍' },
-  { d:'R', q:'我对机械、电子、建筑类的东西感兴趣' },
-  { d:'R', q:'我不怕脏不怕累，愿意在一线干活' },
+// ── 场景化题目池 ──
+// 根据学历规划路径选用不同风格的题目
 
-  // 研究型 I (6题)
-  { d:'I', q:'我喜欢探索事物背后的原理和规律' },
-  { d:'I', q:'我擅长分析数据和解决逻辑难题' },
-  { d:'I', q:'一个人静静思考问题让我很享受' },
-  { d:'I', q:'我喜欢看书查资料系统学习知识' },
-  { d:'I', q:'遇到问题我习惯先搞清楚原因再行动' },
-  { d:'I', q:'我对科学发现和技术进步很好奇' },
+const questionBanks = {
+  // 升学版：适合继续升学的学生（学术/课堂场景）
+  study: [
+    { d:'R', q:'实训课和实验课是我最喜欢的课程' },
+    { d:'R', q:'做课堂项目时我更喜欢动手实操的部分' },
+    { d:'R', q:'比起背书我更喜欢现场操作考试' },
+    { d:'R', q:'我对机械模型、生物标本等实物感兴趣' },
+    { d:'R', q:'参加技能竞赛让我很有成就感' },
+    { d:'R', q:'我宁愿在实验室待着也不愿意坐教室听课' },
 
-  // 艺术型 A (6题)
-  { d:'A', q:'我喜欢画画、写作、音乐、摄影等创作活动' },
-  { d:'A', q:'我擅长用有创意的方式表达自己的想法' },
-  { d:'A', q:'我不喜欢被死板的规定和流程约束' },
-  { d:'A', q:'在自由有美感的环境里我学得最好' },
-  { d:'A', q:'我觉得生活需要艺术和审美的点缀' },
-  { d:'A', q:'我经常有与众不同的想法和点子' },
+    { d:'I', q:'我经常追问老师"为什么"，想弄明白原理' },
+    { d:'I', q:'数学和逻辑类课程我学得比别人轻松' },
+    { d:'I', q:'自习时我喜欢一个人安安静静钻研难题' },
+    { d:'I', q:'做作业前我习惯先复习知识点再动笔' },
+    { d:'I', q:'我对科普书和科学纪录片很着迷' },
+    { d:'I', q:'我喜欢把学到的知识整理成自己的笔记体系' },
 
-  // 社会型 S (6题)
-  { d:'S', q:'我喜欢帮助别人解决困难' },
-  { d:'S', q:'我擅长倾听和安慰别人' },
-  { d:'S', q:'在团队中我常常是活跃气氛的那个人' },
-  { d:'S', q:'和别人讨论交流时我学得最快' },
-  { d:'S', q:'我希望工作能为社会做一些贡献' },
-  { d:'S', q:'我喜欢参加志愿者或公益活动' },
+    { d:'A', q:'课堂上我总是不自觉地走神画画或写东西' },
+    { d:'A', q:'写作文或做创意作业时我特别有灵感' },
+    { d:'A', q:'我讨厌完全按标准答案答题的教育方式' },
+    { d:'A', q:'有艺术氛围的校园环境让我更有学习动力' },
+    { d:'A', q:'我经常被老师和同学说有创意、想法多' },
+    { d:'A', q:'文艺汇演、黑板报这些活动我特别积极' },
 
-  // 企业型 E (6题)
-  { d:'E', q:'我喜欢领导团队和组织活动' },
-  { d:'E', q:'我擅长说服别人和谈判沟通' },
-  { d:'E', q:'我喜欢有竞争和挑战的环境' },
-  { d:'E', q:'在实战和实践中我学得最好' },
-  { d:'E', q:'赚钱和获得成就是我重要的动力' },
-  { d:'E', q:'我不怕冒险，愿意尝试新机会' },
+    { d:'S', q:'同学遇到困难时我最喜欢帮忙解答' },
+    { d:'S', q:'我是很多朋友倾诉心事的对象' },
+    { d:'S', q:'小组讨论时我话最多、气氛最好' },
+    { d:'S', q:'和同学一起学习讨论比一个人学效率高' },
+    { d:'S', q:'选专业时我希望将来能从事帮助别人的工作' },
+    { d:'S', q:'我热心班级事务，常常自愿为集体做事' },
 
-  // 常规型 C (6题)
-  { d:'C', q:'我喜欢按计划和流程有条理地做事' },
-  { d:'C', q:'我擅长整理数据和做表格' },
-  { d:'C', q:'稳定的工作环境让我更有安全感' },
-  { d:'C', q:'有条理地做笔记和复习效果最好' },
-  { d:'C', q:'我认为遵守规则和制度很重要' },
-  { d:'C', q:'我做事细心认真很少出错' },
+    { d:'E', q:'我经常主动当班干部或小组长' },
+    { d:'E', q:'学校辩论赛或竞选演讲我从不怯场' },
+    { d:'E', q:'考试排名和竞赛的竞争让我更有动力' },
+    { d:'E', q:'社会实践和校外活动比上课学得更多' },
+    { d:'E', q:'考个好学历找个好工作赚钱改变命运是我目标' },
+    { d:'E', q:'我不怕报热门专业，竞争大机会也大' },
 
-  // 数字型 D (6题)
-  { d:'D', q:'我对电脑、手机、互联网技术很感兴趣' },
-  { d:'D', q:'我学新软件和新工具上手很快' },
-  { d:'D', q:'我喜欢在网上搜索和学习新知识' },
-  { d:'D', q:'遇到技术问题我习惯自己研究解决' },
-  { d:'D', q:'我对编程、AI、短视频制作感兴趣' },
-  { d:'D', q:'我认为数字技能是未来各行各业的必备' },
+    { d:'C', q:'我习惯按学习计划表一步步执行' },
+    { d:'C', q:'我的笔记和书本总是整理得整整齐齐' },
+    { d:'C', q:'按部就班的学习模式让我效率最高' },
+    { d:'C', q:'复习时我喜欢用表格和思维导图整理' },
+    { d:'C', q:'我从不迟到早退，严格遵守校规' },
+    { d:'C', q:'考试时我习惯反复检查确保万无一失' },
 
-  // 灵活型 F (6题)
-  { d:'F', q:'我兴趣广泛，不愿意只做一件事' },
-  { d:'F', q:'我适应新环境和新变化很快' },
-  { d:'F', q:'重复单调的工作让我很难受' },
-  { d:'F', q:'我通过尝试不同方法来学习' },
-  { d:'F', q:'变化和未知反而让我有点兴奋' },
-  { d:'F', q:'我能同时处理好几件不同的事情' },
-];
+    { d:'D', q:'信息技术课是我的最爱，经常额外学' },
+    { d:'D', q:'我用学习APP和AI工具辅助学习用得特别好' },
+    { d:'D', q:'在网上找学习资源和网课我在行' },
+    { d:'D', q:'电脑手机出小毛病都是我自己研究修' },
+    { d:'D', q:'我希望未来能把数字化技术用到专业中' },
+    { d:'D', q:'数字时代的工具用得越好学习越轻松' },
 
-const answers = new Array(questions.length).fill(0);
-
-const careerMap = {
-  R: [
-    { title:'工程技术员', desc:'机械、电子、建筑工程等领域的技术岗位' },
-    { title:'汽修/维修技师', desc:'汽车维修、设备维护等实操型工作' },
-    { title:'建筑施工/监理', desc:'建筑工地现场管理、质量监督' },
-    { title:'电工/焊工/钳工', desc:'技术型蓝领，技能越老越吃香' },
-    { title:'无人机操作/测绘', desc:'新兴技术实操岗位，前景好' },
+    { d:'F', q:'我兴趣太多样了，不知道专攻哪个方向好' },
+    { d:'F', q:'换新班级或新学校我总能很快适应' },
+    { d:'F', q:'每天上同样的课做同样的作业让我很烦' },
+    { d:'F', q:'我喜欢用各种不同的方法去学同一个知识点' },
+    { d:'F', q:'新开的选修课和社团活动我第一个报名' },
+    { d:'F', q:'我能兼顾学习和课外活动好几件事' },
   ],
-  I: [
-    { title:'数据分析师', desc:'用数据说话，互联网热门岗位' },
-    { title:'实验员/质检员', desc:'科研或企业实验室检测分析' },
-    { title:'程序员/软件开发', desc:'编程开发，IT行业核心岗位' },
-    { title:'金融风控/银行后台', desc:'金融行业分析类岗位' },
-    { title:'医学检验/医药研发', desc:'医疗健康领域技术岗' },
+
+  // 就业版：适合直接进入职场的学生（工作/职业场景）
+  work: [
+    { d:'R', q:'我喜欢动手修理或组装东西' },
+    { d:'R', q:'我擅长使用各种工具或设备' },
+    { d:'R', q:'户外作业比坐办公室更吸引我' },
+    { d:'R', q:'学东西时我喜欢先动手试一遍' },
+    { d:'R', q:'我对机械、电子、建筑类的东西感兴趣' },
+    { d:'R', q:'我不怕脏不怕累，愿意在一线干活' },
+
+    { d:'I', q:'我喜欢探索事物背后的原理和规律' },
+    { d:'I', q:'我擅长分析数据和解决逻辑难题' },
+    { d:'I', q:'一个人静静思考问题让我很享受' },
+    { d:'I', q:'我喜欢看书查资料系统学习知识' },
+    { d:'I', q:'遇到问题我习惯先搞清楚原因再行动' },
+    { d:'I', q:'我对各种新知识新技术都很好奇' },
+
+    { d:'A', q:'我喜欢画画、写作、音乐、摄影等创作活动' },
+    { d:'A', q:'我擅长用有创意的方式表达自己的想法' },
+    { d:'A', q:'我不喜欢被死板的规定和流程约束' },
+    { d:'A', q:'在有美感和自由的环境里我工作最好' },
+    { d:'A', q:'生活和工作都需要艺术的点缀' },
+    { d:'A', q:'我经常有与众不同的想法和点子' },
+
+    { d:'S', q:'我喜欢帮助别人解决困难' },
+    { d:'S', q:'我擅长倾听和安慰别人' },
+    { d:'S', q:'在团队中我常常是活跃气氛的那个人' },
+    { d:'S', q:'和别人讨论交流时我学得最快' },
+    { d:'S', q:'我希望工作能为社会做一些贡献' },
+    { d:'S', q:'我乐于参加公益或志愿者活动' },
+
+    { d:'E', q:'我喜欢领导团队和组织活动' },
+    { d:'E', q:'我擅长说服别人和谈判沟通' },
+    { d:'E', q:'我喜欢有竞争和挑战的环境' },
+    { d:'E', q:'在实干和实践中我学得最好' },
+    { d:'E', q:'赚钱和获得成就是我重要的动力' },
+    { d:'E', q:'我不怕冒险，愿意尝试新机会' },
+
+    { d:'C', q:'我喜欢按计划和流程有条理地做事' },
+    { d:'C', q:'我擅长整理数据和做表格' },
+    { d:'C', q:'稳定的工作环境让我更有安全感' },
+    { d:'C', q:'有条理地安排工作让我效率最高' },
+    { d:'C', q:'我认为遵守规则和制度很重要' },
+    { d:'C', q:'我做事细心认真很少出错' },
+
+    { d:'D', q:'我对电脑、手机、互联网技术很感兴趣' },
+    { d:'D', q:'我学新软件和新工具上手很快' },
+    { d:'D', q:'我喜欢在网上搜索和学习新知识' },
+    { d:'D', q:'遇到技术问题我习惯自己研究解决' },
+    { d:'D', q:'我对编程、AI、短视频制作感兴趣' },
+    { d:'D', q:'数字技能是未来各行各业的必备能力' },
+
+    { d:'F', q:'我兴趣广泛，不愿意只做一件事' },
+    { d:'F', q:'我适应新环境和新变化很快' },
+    { d:'F', q:'重复单调的工作让我很难受' },
+    { d:'F', q:'我通过尝试不同方法来学习' },
+    { d:'F', q:'变化和未知反而让我有点兴奋' },
+    { d:'F', q:'我能同时处理好几件不同的事情' },
   ],
-  A: [
-    { title:'短视频编导/剪辑', desc:'短视频、直播行业内容创作' },
-    { title:'平面设计/UI设计', desc:'互联网产品视觉设计' },
-    { title:'新媒体运营', desc:'公众号、小红书、抖音内容运营' },
-    { title:'插画师/原画师', desc:'美术创作类职业' },
-    { title:'文案/广告策划', desc:'创意写作与营销策划' },
+
+  // 考公版：适合考公务员/事业编的学生（体制/政务场景）
+  gov: [
+    { d:'R', q:'我喜欢处理具体的公文材料和事务' },
+    { d:'R', q:'办事窗口和一线服务岗位我都能胜任' },
+    { d:'R', q:'跑基层、下村下乡的工作我愿意干' },
+    { d:'R', q:'到新岗位我习惯先熟悉操作流程' },
+    { d:'R', q:'我对行政事务、后勤保障类工作感兴趣' },
+    { d:'R', q:'不怕琐碎，把每一件小事做好让我踏实' },
+
+    { d:'I', q:'我擅长分析政策文件和精神内涵' },
+    { d:'I', q:'写材料和研究报告是我的强项' },
+    { d:'I', q:'我习惯深入思考问题的根源和解决方案' },
+    { d:'I', q:'备考期间我能系统整理大量知识点' },
+    { d:'I', q:'我对法律法规和政策动向保持关注' },
+    { d:'I', q:'遇到复杂问题我习惯先分析再行动' },
+
+    { d:'A', q:'写公文我也追求内容清晰、语言美' },
+    { d:'A', q:'我对机关宣传栏、新媒体内容创作感兴趣' },
+    { d:'A', q:'我不喜欢太僵化的官僚主义工作方式' },
+    { d:'A', q:'在有人文关怀的组织里我工作更有劲' },
+    { d:'A', q:'做群众工作和宣传时我能发挥创意' },
+    { d:'A', q:'我有时会用不同常规的思路解决问题' },
+
+    { d:'S', q:'服务群众时我特别有耐心和热心' },
+    { d:'S', q:'调解纠纷和协调沟通是我擅长的' },
+    { d:'S', q:'我在集体中乐于关心同事和新人的感受' },
+    { d:'S', q:'窗口和接待类工作我很愿意做' },
+    { d:'S', q:'我希望工作能实实在在地帮到老百姓' },
+    { d:'S', q:'单位有集体活动时我总是积极响应' },
+
+    { d:'E', q:'我希望将来能在岗位上有所作为' },
+    { d:'E', q:'会议上发言和汇报工作我能讲清楚' },
+    { d:'E', q:'公务员考试竞争激烈但我有信心' },
+    { d:'E', q:'在实干和实践中我成长得最快' },
+    { d:'E', q:'体制内也有晋升空间和发展前景' },
+    { d:'E', q:'我愿意去基层锻炼自己，从一线做起' },
+
+    { d:'C', q:'按规章制度办事让我觉得安心' },
+    { d:'C', q:'整理档案和做报表是我擅长的岗位' },
+    { d:'C', q:'稳定的编制和作息对我很重要' },
+    { d:'C', q:'备考时我习惯制定严格的学习计划' },
+    { d:'C', q:'上下级关系和工作程序我严格遵守' },
+    { d:'C', q:'我做事细致严谨，经得起检查' },
+
+    { d:'D', q:'我熟练使用办公软件和政务系统' },
+    { d:'D', q:'学新政务系统和OA平台我上手很快' },
+    { d:'D', q:'数字化转型也是政府工作的方向' },
+    { d:'D', q:'计算机网络基本问题我能自己处理' },
+    { d:'D', q:'智慧政务、大数据治理很有前景' },
+    { d:'D', q:'数字办公技能是体制内工作的加分项' },
+
+    { d:'F', q:'多岗位轮换我能快速适应新环境' },
+    { d:'F', q:'机关里各种突发状况我都能应对' },
+    { d:'F', q:'每天坐同样的办公室会让我有点闷' },
+    { d:'F', q:'我善于根据不同领导风格调整工作方式' },
+    { d:'F', q:'新政策出台和新任务下达我接受快' },
+    { d:'F', q:'我能同时处理手头好几件公务' },
   ],
-  S: [
-    { title:'教师/培训师', desc:'教育培训行业，稳定有成就感' },
-    { title:'人力资源HR', desc:'招聘、培训、员工关系管理' },
-    { title:'护士/护理人员', desc:'医疗健康领域，社会需求大' },
-    { title:'社区工作者/社工', desc:'基层服务工作，稳中有升' },
-    { title:'客服/售后管理', desc:'互联网公司客户服务' },
-  ],
-  E: [
-    { title:'市场营销/品牌推广', desc:'产品推广与品牌运营' },
-    { title:'电商运营/直播运营', desc:'电商平台运营管理' },
-    { title:'销售经理/商务BD', desc:'企业销售与客户开发' },
-    { title:'项目管理', desc:'统筹协调各类项目推进' },
-    { title:'创业者/个体经营', desc:'自己当老板' },
-  ],
-  C: [
-    { title:'会计/出纳', desc:'财务管理相关工作，越做越精' },
-    { title:'行政文员/秘书', desc:'企业日常行政办公管理' },
-    { title:'银行柜员/大堂经理', desc:'银行业务操作与客户服务' },
-    { title:'仓储物流管理', desc:'供应链与仓库管理' },
-    { title:'公务员/事业单位', desc:'稳定的体制内工作' },
-  ],
-  D: [
-    { title:'IT运维/网络管理', desc:'企业网络与系统维护' },
-    { title:'前端开发/网页制作', desc:'网站与应用界面开发' },
-    { title:'短视频运营/直播技术', desc:'直播推流、视频制作、账号运营' },
-    { title:'AI训练师/数据分析', desc:'人工智能数据处理与模型训练' },
-    { title:'网络安全工程师', desc:'信息安全管理，需求量大' },
-  ],
-  F: [
-    { title:'直播主播/带货主播', desc:'直播带货，表达能力强' },
-    { title:'活动策划/会展策划', desc:'各类活动统筹策划' },
-    { title:'销售代表/市场推广', desc:'跑市场，挑战与收入并存' },
-    { title:'自由职业者', desc:'自媒体、设计、摄影等自由发展' },
-    { title:'创业合伙人', desc:'与人合伙创业，互补共赢' },
+
+  // 创业版：适合想创业的学生（商业/创新场景）
+  startup: [
+    { d:'R', q:'我习惯亲自动手去做而不是空想' },
+    { d:'R', q:'做产品原型或样品我很有行动力' },
+    { d:'R', q:'跑市场跑客户跑供应商我都不怕' },
+    { d:'R', q:'再宏大的计划我也能从第一件小事做起' },
+    { d:'R', q:'我对实体产品、手工制作感兴趣' },
+    { d:'R', q:'创业初期一人身兼多职我干得来' },
+
+    { d:'I', q:'我做决定前习惯调研分析竞品和市场' },
+    { d:'I', q:'我擅长发现别人没注意到的商机' },
+    { d:'I', q:'一个人构思商业计划书我能沉浸很久' },
+    { d:'I', q:'我经常学习商业模式和成功案例' },
+    { d:'I', q:'先想清楚怎么做再动手是我的习惯' },
+    { d:'I', q:'我对行业趋势和新技术保持敏锐' },
+
+    { d:'A', q:'做品牌和产品我喜欢有设计感' },
+    { d:'A', q:'我擅长用创新方式推广和做营销' },
+    { d:'A', q:'朝九晚五的上班方式不适合我' },
+    { d:'A', q:'在我的店面或工作室里有美感很重要' },
+    { d:'A', q:'做内容、拍视频、搞创意我都喜欢' },
+    { d:'A', q:'我经常冒出一些颠覆性的想法' },
+
+    { d:'S', q:'对客户和合作伙伴我真诚热情' },
+    { d:'S', q:'团队里我善于激励和关心小伙伴' },
+    { d:'S', q:'谈合作和见客户我自来熟不怯场' },
+    { d:'S', q:'做服务业或面向消费者的生意很适合我' },
+    { d:'S', q:'创业赚钱的同时我也想帮到更多人' },
+    { d:'S', q:'社区和圈子里我人缘好、朋友多' },
+
+    { d:'E', q:'我天生就有当领头人的欲望' },
+    { d:'E', q:'路演、谈判、推销对我来说不难' },
+    { d:'E', q:'竞争激烈的领域反而更有劲' },
+    { d:'E', q:'市场上实战比课堂上学到的东西多多了' },
+    { d:'E', q:'赚到第一桶金是我的首要目标' },
+    { d:'E', q:'我愿意承担风险去博一个更大的机会' },
+
+    { d:'C', q:'我会给公司制定清晰的制度和流程' },
+    { d:'C', q:'记账、管库存、做报表这些我都能做' },
+    { d:'C', q:'虽然创业有不确定性但我会尽量规范' },
+    { d:'C', q:'创业前我会做详细的商业计划' },
+    { d:'C', q:'遵守法律法规和财税制度很重要' },
+    { d:'C', q:'我能把杂乱的业务梳理出流程来' },
+
+    { d:'D', q:'我擅长用互联网工具推广业务' },
+    { d:'D', q:'新出的运营工具和AI产品我第一时间尝鲜' },
+    { d:'D', q:'抖音、小红书、公众号运营我懂' },
+    { d:'D', q:'线上开店或建网站我能自己搞定' },
+    { d:'D', q:'我想做科技含量高或有数字化的项目' },
+    { d:'D', q:'不懂技术也要懂用技术，这是创业基本功' },
+
+    { d:'F', q:'我的兴趣太多变，经常换项目方向' },
+    { d:'F', q:'市场变化快我转型也快' },
+    { d:'F', q:'固定做同一种生意我会觉得很无聊' },
+    { d:'F', q:'我擅长在工作中边干边摸索' },
+    { d:'F', q:'未知的挑战反而激发我的斗志' },
+    { d:'F', q:'能兼顾多个项目同时推进是我的优势' },
   ],
 };
+
+// 路径→题目池映射（根据学历自动选择）
+function getQuestionSet(edu) {
+  if (edu === '高中/中专') return questionBanks.study;
+  return questionBanks.work;
+}
+
+// ── 工具函数 ──
+function shuffleArray(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function saveToLocalStorage() {
+  try {
+    const data = { answers, currentQ, questions, userInfo };
+    localStorage.setItem('career_assessment', JSON.stringify(data));
+  } catch(e) { /* ignore */ }
+}
+
+function loadFromLocalStorage() {
+  try {
+    const raw = localStorage.getItem('career_assessment');
+    if (!raw) return false;
+    const data = JSON.parse(raw);
+    if (!data.answers || !data.questions || data.questions.length === 0) return false;
+    // 恢复数据
+    data.answers.forEach((v, i) => answers[i] = v);
+    answers.length = data.answers.length;
+    currentQ = data.currentQ || 0;
+    questions = data.questions;
+    Object.assign(userInfo, data.userInfo);
+    return true;
+  } catch(e) { return false; }
+}
+
+function clearSavedData() {
+  try { localStorage.removeItem('career_assessment'); } catch(e) { /* ignore */ }
+}
+
+let questions = []; // 初始化，在 startQuiz 时填充
+const answers = [];
+
+// ── 行业智能推荐系统 ──
+// 根据所选专业匹配到行业，每个维度推荐该行业相关岗位
+
+// 行业分类规则：通过专业关键词匹配
+function matchIndustry(major) {
+  const rules = [
+    { kw:['计算机','软件','大数据','人工智能','IT','网络','通信','物联网','云','数字媒体','信息安全','移动应用','嵌入式','区块链','虚拟现实','程序','软件工程','数据科学','UI','编程'], id:'it' },
+    { kw:['护理','医学','医','药','口腔','康复','检验','影像','针灸','中医','临床','麻醉','儿科','健康','养老','医疗器械','生物制药','保健','养生','医疗美容','预防','卫生'], id:'med' },
+    { kw:['机电','电气','自动化','机器人','数控','模具','新能源','汽车','无人机','机械','制造','焊接','电梯','仪器','测控','材料','车辆','船舶','航空','装备'], id:'eng' },
+    { kw:['建筑','造价','工程','市政','道路','桥梁','测量','铁道','轨道','交通','土木','城乡规划','给排水','水利','消防','装饰'], id:'con' },
+    { kw:['设计','艺术','动漫','服装','广告','摄影','游戏','工艺','陶瓷','形象','音乐','舞蹈','美术','表演','视觉传达','环境艺术','室内','产品'], id:'art' },
+    { kw:['会计','财务','审计','金融','税务','经济','贸易','电商','跨境','营销','工商','管理','人力资源','行政','物流','连锁','商务','酒店','旅游','会展','家政','烹饪','营养','食品'], id:'bus' },
+    { kw:['教育','学前','小学','早期','英语','体育','音乐','美术','舞蹈','特殊','心理','汉语言','数学','师范','教育学'], id:'edu' },
+    { kw:['园林','园艺','畜牧','兽医','宠物','农业','农学','茶','食品','检测','酿造','林业','水产','种子','环境'], id:'agr' },
+    { kw:['新闻','播音','主持','编导','影视','直播','运营','广告策划','传播','融媒体','广播','网络与新媒体','编导'], id:'media' },
+    { kw:['空乘','民航','机场','高铁','轨道','旅游','邮轮','导游','研学','会展','殡葬','养老'], id:'srv' },
+    { kw:['法律','司法','警务','社工','社区','公共','行政','劳动','社会','法学','思政'], id:'law' },
+    { kw:['英语','日语','韩语','法语','翻译','商务英语','中文','文秘','语言'], id:'lang' },
+    { kw:['数学','物理','化学','生物','地理','心理','统计学','理学','应用'], id:'sci' },
+    { kw:['哲学','历史','考古','文物'], id:'hum' },
+  ];
+  for (const r of rules) {
+    if (r.kw.some(k => major.includes(k))) return r.id;
+  }
+  return 'general'; // 兜底通用
+}
+
+// 行业名映射
+const industryNames = {
+  it:'IT/互联网', med:'医药卫生', eng:'装备制造', con:'土木建筑',
+  art:'文化艺术/设计', bus:'财经商贸', edu:'教育/体育', agr:'农林牧渔',
+  media:'传媒/影视', srv:'交通/服务', law:'法律/公共', lang:'语言/文秘',
+  sci:'理学/基础', hum:'人文社科', general:'综合'
+};
+
+// 各行业 × 各维度 具体岗位推荐
+const industryCareers = {
+  // ── IT/互联网行业 ──
+  it: {
+    R: [
+      { title:'网络工程师', desc:'网络搭建与维护，数据中心运维' },
+      { title:'硬件工程师', desc:'服务器、设备部署与维护' },
+      { title:'智能硬件测试', desc:'IoT 设备、嵌入式系统测试' },
+      { title:'通信工程督导', desc:'基站建设与通信设备调试' },
+      { title:'IT 运维工程师', desc:'企业 IT 系统日常维护' },
+    ],
+    I: [
+      { title:'软件工程师/后端开发', desc:'Java/Python/Go 服务端开发' },
+      { title:'算法工程师', desc:'AI 模型、推荐系统、搜索算法' },
+      { title:'数据科学家', desc:'海量数据挖掘与建模分析' },
+      { title:'安全研究员', desc:'网络安全漏洞分析与防护' },
+      { title:'测试开发工程师', desc:'自动化测试、质量保障' },
+    ],
+    A: [
+      { title:'UI/UX 设计师', desc:'用户界面与交互体验设计' },
+      { title:'前端开发工程师', desc:'Web/App 前端界面实现' },
+      { title:'游戏美术/动效', desc:'游戏角色、场景、特效设计' },
+      { title:'数据可视化设计师', desc:'图表、大屏、数据分析可视呈现' },
+      { title:'产品体验设计师', desc:'产品交互流程与体验优化' },
+    ],
+    S: [
+      { title:'IT 培训讲师', desc:'编程、网络等IT技能培训教学' },
+      { title:'技术支持工程师', desc:'客户技术问题解答与处理' },
+      { title:'用户运营/社群运营', desc:'APP用户运营、社群维护' },
+      { title:'产品经理', desc:'产品需求分析与项目推进' },
+      { title:'HRBP(技术方向)', desc:'科技公司人力资源业务伙伴' },
+    ],
+    E: [
+      { title:'ToB 销售/客户经理', desc:'企业级软件/云服务销售' },
+      { title:'互联网产品运营', desc:'产品增长、用户转化策略' },
+      { title:'技术项目管理', desc:'研发项目全生命周期管理' },
+      { title:'IT 创业/技术合伙人', desc:'技术驱动型创业' },
+      { title:'商务拓展(BD)', desc:'渠道合作与商业资源对接' },
+    ],
+    C: [
+      { title:'IT 项目助理', desc:'项目进度跟踪、文档管理' },
+      { title:'信息安全合规', desc:'等保测评、安全审计' },
+      { title:'数据标注/数据审核', desc:'AI训练数据处理与质检' },
+      { title:'IT 行政/资产管理', desc:'设备采购、资产盘点和报销' },
+      { title:'ERP 系统实施', desc:'企业管理系统上线与维护' },
+    ],
+    D: [
+      { title:'全栈工程师', desc:'前后端通吃，小而美团队核心' },
+      { title:'AI 训练师', desc:'大模型数据处理与训练调优' },
+      { title:'短视频/直播技术', desc:'推流、编码、OBS 等技术实现' },
+      { title:'云计算架构师', desc:'云原生架构设计与部署' },
+      { title:'自动化测试架构', desc:'测试框架搭建与CI/CD集成' },
+    ],
+    F: [
+      { title:'独立开发者', desc:'自己接项目或做产品' },
+      { title:'技术自媒体/博主', desc:'写技术文章、做教程视频' },
+      { title:'产品运营（增长方向）', desc:'用户增长、裂变、投放' },
+      { title:'远程自由开发者', desc:'国际远程工作，接全球项目' },
+      { title:'技术社区运营', desc:'开源社区、技术社群运营' },
+    ],
+  },
+
+  // ── 医药卫生行业 ──
+  med: {
+    R: [
+      { title:'临床检验技师', desc:'血常规、生化、免疫等检验操作' },
+      { title:'医学影像技师', desc:'CT/MRI/X光技术操作' },
+      { title:'口腔医学技术', desc:'义齿制作、口腔修复工艺' },
+      { title:'康复治疗师', desc:'物理治疗、作业治疗实操' },
+      { title:'手术室器械护士', desc:'手术器械准备与配合' },
+    ],
+    I: [
+      { title:'临床医生(本)', desc:'疾病诊断与治疗方案制定' },
+      { title:'药物研发员', desc:'新药发现与临床试验设计' },
+      { title:'医学研究员', desc:'医学论文研究、课题申报' },
+      { title:'流行病学分析师', desc:'疾病分布与预防策略研究' },
+      { title:'基因检测分析师', desc:'基因测序数据分析解读' },
+    ],
+    A: [
+      { title:'医学插画师', desc:'医学插图、解剖图绘制' },
+      { title:'医疗科普/健康博主', desc:'短视频平台医学科普创作' },
+      { title:'医疗建筑设计', desc:'专业医疗机构室内设计' },
+      { title:'医学动画制作', desc:'3D医学动画、手术演示制作' },
+      { title:'医疗品牌视觉设计', desc:'医院品牌、宣传物料设计' },
+    ],
+    S: [
+      { title:'护士/护师', desc:'临床护理，患者沟通与照顾' },
+      { title:'医疗社工', desc:'医患沟通、患者心理疏导' },
+      { title:'健康教育讲师', desc:'社区/医院健康教育宣讲' },
+      { title:'导诊/患者服务', desc:'医院大厅就诊引导服务' },
+      { title:'养老护理管理', desc:'养老机构护理团队管理' },
+    ],
+    E: [
+      { title:'医药代表', desc:'药品/医疗器械推广与销售' },
+      { title:'医疗项目经理', desc:'医院项目、健康管理项目统筹' },
+      { title:'健康管理公司运营', desc:'体检中心、健康管理平台运营' },
+      { title:'医疗器械销售', desc:'医疗设备、耗材的市场推广' },
+      { title:'私立医院运营', desc:'民营医院/诊所的运营管理' },
+    ],
+    C: [
+      { title:'医院行政/医务科', desc:'医院日常行政与医疗事务管理' },
+      { title:'医保结算员', desc:'医保报销核算与结算' },
+      { title:'药房管理/药品采购', desc:'药品出入库管理与供应链' },
+      { title:'病案管理员', desc:'病历档案整理归档' },
+      { title:'医疗数据分析', desc:'DRG病种数据分析与上报' },
+    ],
+    D: [
+      { title:'医疗IT/医院信息科', desc:'HIS/LIS/PACS系统运维' },
+      { title:'远程医疗技术', desc:'远程会诊平台搭建维护' },
+      { title:'医疗AI产品经理', desc:'AI辅助诊断产品设计' },
+      { title:'健康大数据分析', desc:'健康数据清洗与分析建模' },
+      { title:'智慧养老技术', desc:'智能养老设备与系统' },
+    ],
+    F: [
+      { title:'健康自媒体博主', desc:'健康养生科普短视频创作' },
+      { title:'私人健康管理师', desc:'高端客户一对一健康管理' },
+      { title:'医疗翻译', desc:'国际医疗文献及现场口译' },
+      { title:'中医养生创业', desc:'推拿、艾灸、药膳创业' },
+      { title:'医疗展会/会议策划', desc:'医疗器械展、学术会议筹办' },
+    ],
+  },
+
+  // ── 装备制造工程行业 ──
+  eng: {
+    R: [
+      { title:'机电维修技师', desc:'工厂电气设备维修保养' },
+      { title:'数控机床操作', desc:'精密零件数控加工编程' },
+      { title:'工业机器人调试', desc:'产线机器人编程与调试' },
+      { title:'汽车维修技师', desc:'燃油/新能源汽车维修' },
+      { title:'焊接/装配技工', desc:'结构件焊接与装配' },
+    ],
+    I: [
+      { title:'机械设计工程师', desc:'CAD/CAE 机械结构设计' },
+      { title:'电气工程师', desc:'电气控制系统设计与调试' },
+      { title:'工艺工程师', desc:'生产工艺流程优化改进' },
+      { title:'质量工程师', desc:'QC/QA质量控制与体系' },
+      { title:'材料工程师', desc:'新材料测试与工艺验证' },
+    ],
+    A: [
+      { title:'工业设计师', desc:'产品外观造型设计' },
+      { title:'3D建模师', desc:'工业产品三维建模渲染' },
+      { title:'汽车造型设计', desc:'汽车外观与内饰设计' },
+      { title:'工程制图员', desc:'机械/建筑图纸绘制' },
+      { title:'UI设计(工控方向)', desc:'工业控制面板界面设计' },
+    ],
+    S: [
+      { title:'生产管理培训生', desc:'产线管理、班组协调' },
+      { title:'安全管理员(EHS)', desc:'生产安全、环保、职业健康' },
+      { title:'技术培训师', desc:'新员工设备操作培训' },
+      { title:'采购专员', desc:'零部件/原材料采购与供应商管理' },
+      { title:'生产计划员', desc:'排产计划、物料需求规划' },
+    ],
+    E: [
+      { title:'工业品销售', desc:'机械设备/零部件销售' },
+      { title:'项目经理(工程)', desc:'工程项目全周期管理' },
+      { title:'供应链经理', desc:'生产供应链整合优化' },
+      { title:'工厂厂长/车间主任', desc:'生产单元全面管理' },
+      { title:'新能源项目开发', desc:'光伏/储能/充电桩项目开发' },
+    ],
+    C: [
+      { title:'ERP/MES系统专员', desc:'生产信息化系统数据维护' },
+      { title:'采购文员/跟单', desc:'订单跟踪、供应商对账' },
+      { title:'仓库管理员', desc:'原材料/成品仓库管理' },
+      { title:'质检报告文员', desc:'质量检测报告编制归档' },
+      { title:'生产统计员', desc:'车间产量、效率数据统计分析' },
+    ],
+    D: [
+      { title:'工业物联网工程师', desc:'生产线数据采集与IoT平台' },
+      { title:'智能制造系统运维', desc:'MES/WMS等系统技术支持' },
+      { title:'数字孪生工程师', desc:'工厂数字孪生建模与仿真' },
+      { title:'自动化测试工程师', desc:'产线自动化测试方案设计' },
+      { title:'工业数据分析师', desc:'生产数据挖掘与工艺优化' },
+    ],
+    F: [
+      { title:'技术自媒体（工业向）', desc:'智能制造、新能源汽车科普' },
+      { title:'自由机械设计', desc:'接CAD设计外单' },
+      { title:'工业品电商运营', desc:'机械设备线上销售与推广' },
+      { title:'新能源充电站创业', desc:'充电站选址、建设与运营' },
+      { title:'智能家居改装', desc:'家装智能化改造服务' },
+    ],
+  },
+
+  // ── 财经商贸行业 ──
+  bus: {
+    R: [
+      { title:'仓储物流操作', desc:'仓库拣货、打包、盘点' },
+      { title:'收银/出纳', desc:'收银结算、现金与银行管理' },
+      { title:'茶艺/咖啡师', desc:'茶饮/咖啡制作与服务' },
+      { title:'烹饪厨师', desc:'餐厅后厨菜品制作' },
+      { title:'酒店客房/前台', desc:'酒店运营一线实操' },
+    ],
+    I: [
+      { title:'金融分析师', desc:'证券、基金、投资分析' },
+      { title:'市场研究员', desc:'行业研究、市场调研分析' },
+      { title:'审计师', desc:'企业内部/外部审计工作' },
+      { title:'电商数据分析师', desc:'电商平台数据运营分析' },
+      { title:'税务筹划师', desc:'企业税务规划与申报' },
+    ],
+    A: [
+      { title:'电商美工/视觉设计', desc:'产品主图、详情页、店铺装修' },
+      { title:'广告文案/创意策划', desc:'品牌文案、广告创意输出' },
+      { title:'商业插画师', desc:'品牌IP、包装插画设计' },
+      { title:'短视频编导(电商)', desc:'带货视频、商品展示编导' },
+      { title:'品牌包装设计师', desc:'产品包装视觉设计' },
+    ],
+    S: [
+      { title:'客户经理/客服主管', desc:'客户关系维护与服务团队管理' },
+      { title:'培训讲师(银行/保险)', desc:'金融产品与销售技巧培训' },
+      { title:'电商客服', desc:'售前咨询与售后处理' },
+      { title:'HR/招聘专员', desc:'企业人才招聘与人事管理' },
+      { title:'导购/销售顾问', desc:'线下门店客户接待与产品讲解' },
+    ],
+    E: [
+      { title:'销售经理/区域经理', desc:'销售团队管理与市场拓展' },
+      { title:'电商运营主管', desc:'店铺运营、活动策划、推广' },
+      { title:'外贸/跨境运营', desc:'阿里国际站、亚马逊等跨境平台' },
+      { title:'品牌经理/市场总监', desc:'品牌定位与全案营销策略' },
+      { title:'连锁店/加盟店长', desc:'门店全面运营管理' },
+    ],
+    C: [
+      { title:'会计/总账会计', desc:'账务处理、财务报表编制' },
+      { title:'银行柜员/信贷员', desc:'银行业务办理与信贷审批' },
+      { title:'报关员/单证员', desc:'进出口报关及贸易单证处理' },
+      { title:'行政/人事专员', desc:'企业办公文职综合事务' },
+      { title:'财务BP', desc:'业务财务，深入业务决策支持' },
+    ],
+    D: [
+      { title:'跨境电商运营', desc:'Shopee/Lazada/亚马逊运营' },
+      { title:'数据运营/BI分析', desc:'业务数据报表与商业智能' },
+      { title:'直播中控/场控', desc:'直播后台操控与数据监控' },
+      { title:'电商ERP系统专员', desc:'电商ERP系统操作与对接' },
+      { title:'RPA自动化专员', desc:'财务/办公流程自动化实施' },
+    ],
+    F: [
+      { title:'淘宝/抖音店主', desc:'自己开店、选品与直播带货' },
+      { title:'自由理财顾问', desc:'个人投资理财咨询服务' },
+      { title:'探店/测评博主', desc:'本地生活探店短视频创作' },
+      { title:'跨境代购/买手', desc:'海淘代购与时尚买手' },
+      { title:'保险代理人/经纪人', desc:'保险产品咨询与销售' },
+    ],
+  },
+
+  // ── 教育/体育行业 ──
+  edu: {
+    R: [
+      { title:'体育教练/体能训练师', desc:'运动训练指导与体能提升' },
+      { title:'实验管理员', desc:'学校实验室设备维护管理' },
+      { title:'书法/美术指导老师', desc:'艺术类课外辅导实操教学' },
+      { title:'户外拓展教练', desc:'青少年户外拓展训练' },
+      { title:'乐器维修调律师', desc:'钢琴等乐器调律与维护' },
+    ],
+    I: [
+      { title:'教育研究员', desc:'课程设计、教育方法研究' },
+      { title:'教材编辑/教学产品', desc:'教材编写与教学资源开发' },
+      { title:'心理测评分析师', desc:'学生心理健康测评与分析' },
+      { title:'教育数据分析师', desc:'教学数据、成绩数据分析' },
+      { title:'特殊教育评估师', desc:'特需儿童评估与个别化方案' },
+    ],
+    A: [
+      { title:'美术/音乐教师', desc:'中小学美术音乐教学' },
+      { title:'口才/主持培训师', desc:'青少年演讲口才培训' },
+      { title:'课件设计师', desc:'教学课件视觉设计与动画制作' },
+      { title:'教育短视频编导', desc:'教育类短视频策划与制作' },
+      { title:'绘本/儿童内容创作', desc:'儿童绘本与教育内容创作' },
+    ],
+    S: [
+      { title:'班主任/辅导员', desc:'班级管理、学生思想引导' },
+      { title:'幼儿教师/早教老师', desc:'幼儿园/早教中心教育教学' },
+      { title:'特殊教育老师', desc:'特需儿童教育与康复' },
+      { title:'心理咨询师(学校)', desc:'学生心理辅导与危机干预' },
+      { title:'研学导师/带队老师', desc:'研学旅行活动设计与带队' },
+    ],
+    E: [
+      { title:'培训机构校长', desc:'教育培训机构全面运营' },
+      { title:'教育市场主管', desc:'培训机构招生与市场推广' },
+      { title:'研学基地运营', desc:'研学基地策划与运营管理' },
+      { title:'体育俱乐部经理', desc:'体育俱乐部运营管理' },
+      { title:'家庭教育顾问', desc:'家庭教育规划与咨询服务' },
+    ],
+    C: [
+      { title:'学校行政/教务', desc:'排课、学籍、考试组织' },
+      { title:'培训机构教务管理', desc:'教学进度监督与质量评估' },
+      { title:'图书管理员', desc:'学校/图书馆图书管理' },
+      { title:'教育机构前台/客服', desc:'家长咨询接待与沟通' },
+      { title:'教学档案管理员', desc:'教学资料归档与文档管理' },
+    ],
+    D: [
+      { title:'在线教育产品运营', desc:'网课平台运营与用户增长' },
+      { title:'教育信息化技术', desc:'智慧校园/教学系统维护' },
+      { title:'教育类APP产品经理', desc:'教育产品功能设计迭代' },
+      { title:'AI教学工具设计师', desc:'AI辅助教学产品设计' },
+      { title:'教育数据运营', desc:'在线教育数据监控与优化' },
+    ],
+    F: [
+      { title:'家教/私人辅导', desc:'一对一上门或在线辅导' },
+      { title:'知识付费博主', desc:'把自己的专业知识做成课程' },
+      { title:'陪学/陪练师', desc:'乐器、体育、棋类陪练' },
+      { title:'教育自媒体', desc:'教育类抖音/B站/小红书创作' },
+      { title:'家庭教育指导师', desc:'家庭教育规划独立咨询' },
+    ],
+  },
+
+  // ── 传媒/影视行业 ──
+  media: {
+    R: [
+      { title:'摄影/摄像师', desc:'活动摄影、宣传片拍摄' },
+      { title:'灯光/音响师', desc:'演出录制现场灯光音响操控' },
+      { title:'视频剪辑师', desc:'素材剪辑、特效包装' },
+      { title:'导播/切换台操作', desc:'多机位直播导播切换' },
+      { title:'后期制作/调色师', desc:'视频后期调色与特效合成' },
+    ],
+    I: [
+      { title:'媒体数据分析师', desc:'内容传播数据、用户画像分析' },
+      { title:'舆情监控分析师', desc:'网络舆情监测与研判' },
+      { title:'行业研究员(媒体向)', desc:'媒体行业趋势、竞品研究' },
+      { title:'传播效果研究员', desc:'广告投放ROI与传播效果评估' },
+      { title:'数字版权管理', desc:'影视音乐版权监测与维权' },
+    ],
+    A: [
+      { title:'编导/策划', desc:'节目、短视频、纪录片编导策划' },
+      { title:'文案/创意策划', desc:'广告文案、宣传片创意构思' },
+      { title:'动画师/MG动画', desc:'二维/三维动画制作' },
+      { title:'主持人/播音员', desc:'广播、电视、活动主持' },
+      { title:'数字绘景/概念设计', desc:'影视画面概念设计绘制' },
+    ],
+    S: [
+      { title:'记者/采编', desc:'新闻采访与内容采编' },
+      { title:'社群运营(媒体向)', desc:'粉丝社群建设与互动' },
+      { title:'活动主持人', desc:'商业活动、婚礼主持' },
+      { title:'公众演讲教练', desc:'演讲口才培训辅导' },
+      { title:'新媒体账号代运营', desc:'帮企业做新媒体内容对接' },
+    ],
+    E: [
+      { title:'制片人/项目统筹', desc:'影视项目全流程统筹管理' },
+      { title:'MCN机构运营', desc:'达人孵化、内容商业化' },
+      { title:'广告销售/媒介BD', desc:'广告位、KOL资源销售' },
+      { title:'娱乐经纪人', desc:'艺人商务与行程管理' },
+      { title:'流媒体/短视频平台运营', desc:'平台活动策划与内容运营' },
+    ],
+    C: [
+      { title:'场记/剧本统筹', desc:'剧组场记、剧本细节管理' },
+      { title:'制作协调/制片助理', desc:'剧组后勤与拍摄协调' },
+      { title:'媒资管理员', desc:'成片、素材归档管理' },
+      { title:'排播/发布专员', desc:'播出计划编排与多平台分发' },
+      { title:'字幕/校对', desc:'视频字幕制作与内容校对' },
+    ],
+    D: [
+      { title:'短视频/直播运营', desc:'账号数据分析与运营策略' },
+      { title:'数字人/AI内容创作', desc:'AI生成视频、数字人直播' },
+      { title:'后期特效/合成', desc:'AE/Nuke特效合成包装' },
+      { title:'3D视效/虚拟拍摄', desc:'虚拟制片与3D场景渲染' },
+      { title:'内容推荐算法运营', desc:'推荐算法训练与内容策略' },
+    ],
+    F: [
+      { title:'自由摄影师/剪辑师', desc:'接婚礼、活动、宣传片拍摄' },
+      { title:'个人IP/自媒体博主', desc:'打造个人IP，全平台内容创作' },
+      { title:'直播带货主播', desc:'直播间产品讲解与带货' },
+      { title:'独立纪录片导演', desc:'自己策划拍摄独立纪录片' },
+      { title:'探店/旅行博主', desc:'生活方式类短视频创作' },
+    ],
+  },
+
+  // ── 交通运输/服务行业 ──
+  srv: {
+    R: [
+      { title:'空乘/乘务员', desc:'机上客舱服务与安全管理' },
+      { title:'高铁/动车乘务员', desc:'高铁旅客服务与车厢管理' },
+      { title:'地勤/值机员', desc:'机场值机、行李托运服务' },
+      { title:'酒店前台/礼宾', desc:'酒店入住接待与客户服务' },
+      { title:'会展搭建/布展', desc:'展台搭建、展览布置' },
+    ],
+    I: [
+      { title:'航线/班次规划', desc:'航空/铁路线路运力规划' },
+      { title:'旅游产品经理', desc:'旅游线路设计与行程策划' },
+      { title:'酒店收益管理', desc:'酒店房间定价与收益优化' },
+      { title:'交通数据分析', desc:'客流预测与运营调度分析' },
+      { title:'会展市场调研', desc:'会展项目可行性研究' },
+    ],
+    A: [
+      { title:'旅游自媒体/旅行博主', desc:'旅游攻略与旅行Vlog创作' },
+      { title:'酒店室内设计师', desc:'酒店空间与客房设计' },
+      { title:'会展/展厅设计师', desc:'展台特装与空间设计' },
+      { title:'航空文创设计', desc:'航空公司周边文创产品设计' },
+      { title:'旅游摄影/航拍', desc:'旅游景区摄影与无人机拍摄' },
+    ],
+    S: [
+      { title:'导游/讲解员', desc:'景区带团讲解与游客服务' },
+      { title:'客服主管(航空/酒店)', desc:'旅客投诉处理与服务提升' },
+      { title:'婚庆/活动策划', desc:'婚礼、庆典等活动的统筹执行' },
+      { title:'老年服务/社工', desc:'社区/养老机构关怀服务' },
+      { title:'研学旅行导师', desc:'研学团队的组织与带队讲解' },
+    ],
+    E: [
+      { title:'旅行社/旅游公司经理', desc:'旅游公司运营与业务拓展' },
+      { title:'酒店前厅/销售经理', desc:'酒店营收与销售管理' },
+      { title:'会展项目经理', desc:'大型展会项目全流程' },
+      { title:'民宿/客栈老板', desc:'民宿设计、运营与品牌' },
+      { title:'婚庆公司创业者', desc:'婚庆服务全案策划运营' },
+    ],
+    C: [
+      { title:'票务/预订专员', desc:'机票火车票预订与客服' },
+      { title:'旅行社计调', desc:'团队出行用车/住宿/门票对接' },
+      { title:'会展会务执行', desc:'会议签到、物料、现场管理' },
+      { title:'酒店行政/财务', desc:'酒店前台管理与账务处理' },
+      { title:'殡葬服务专员', desc:'殡仪服务流程安排与协调' },
+    ],
+    D: [
+      { title:'OTA运营(携程/美团)', desc:'在线旅游平台房源/产品运营' },
+      { title:'智慧酒店系统运维', desc:'酒店PMS/自助入住系统' },
+      { title:'旅游大数据分析', desc:'景区客流、消费数据分析' },
+      { title:'智慧交通系统维护', desc:'公交/地铁智能调度系统' },
+      { title:'在线会展/虚拟展厅', desc:'线上展会平台搭建运营' },
+    ],
+    F: [
+      { title:'自由导游/定制师', desc:'定制旅游路线，深度游向导' },
+      { title:'旅行博主/Vlogger', desc:'旅游类内容创作与变现' },
+      { title:'民宿合伙人/主理人', desc:'民宿品牌运营与体验设计' },
+      { title:'活动/派对策划', desc:'私人派对、公司团建策划' },
+      { title:'宠物寄养/遛狗服务', desc:'宠物服务创业' },
+    ],
+  },
+
+  // ── 默认通用（兜底） ──
+  general: {
+    R: [
+      { title:'工程技术员', desc:'机械、电子、建筑等领域的实操技术岗位' },
+      { title:'汽修/维修技师', desc:'汽车维修、设备维护等实操型工作' },
+      { title:'建筑施工/监理', desc:'建筑工地现场管理与质量监督' },
+      { title:'电工/焊工/钳工', desc:'技术型蓝领，技能越老越吃香' },
+      { title:'无人机操作/测绘', desc:'新兴技术实操岗位，前景好' },
+    ],
+    I: [
+      { title:'数据分析师', desc:'用数据说话，互联网热门岗位' },
+      { title:'实验员/质检员', desc:'科研或企业实验室检测分析' },
+      { title:'程序员/软件开发', desc:'编程开发，IT行业核心岗位' },
+      { title:'金融风控/银行后台', desc:'金融行业分析类岗位' },
+      { title:'医学检验/医药研发', desc:'医疗健康领域技术岗' },
+    ],
+    A: [
+      { title:'短视频编导/剪辑', desc:'短视频、直播行业内容创作' },
+      { title:'平面设计/UI设计', desc:'互联网产品视觉设计' },
+      { title:'新媒体运营', desc:'公众号、小红书、抖音运营' },
+      { title:'插画师/原画师', desc:'美术创作类职业' },
+      { title:'文案/广告策划', desc:'创意写作与营销策划' },
+    ],
+    S: [
+      { title:'教师/培训师', desc:'教育培训行业，稳定有成就感' },
+      { title:'人力资源HR', desc:'招聘、培训、员工关系管理' },
+      { title:'护士/护理人员', desc:'医疗健康领域，社会需求大' },
+      { title:'社区工作者/社工', desc:'基层服务工作，稳中有升' },
+      { title:'客服/售后管理', desc:'互联网公司客户服务' },
+    ],
+    E: [
+      { title:'市场营销/品牌推广', desc:'产品推广与品牌运营' },
+      { title:'电商运营/直播运营', desc:'电商平台运营管理' },
+      { title:'销售经理/商务BD', desc:'企业销售与客户开发' },
+      { title:'项目管理', desc:'统筹协调各类项目推进' },
+      { title:'创业者/个体经营', desc:'自己当老板' },
+    ],
+    C: [
+      { title:'会计/出纳', desc:'财务管理相关工作' },
+      { title:'行政文员/秘书', desc:'企业日常行政办公管理' },
+      { title:'银行柜员/大堂经理', desc:'银行业务操作与客户服务' },
+      { title:'仓储物流管理', desc:'供应链与仓库管理' },
+      { title:'公务员/事业单位', desc:'稳定的体制内工作' },
+    ],
+    D: [
+      { title:'IT运维/网络管理', desc:'企业网络与系统维护' },
+      { title:'前端开发/网页制作', desc:'网站与应用界面开发' },
+      { title:'短视频运营/直播技术', desc:'直播推流、视频制作、账号运营' },
+      { title:'AI训练师/数据分析', desc:'人工智能数据处理与模型训练' },
+      { title:'网络安全工程师', desc:'信息安全管理，需求量大' },
+    ],
+    F: [
+      { title:'直播主播/带货主播', desc:'直播带货，表达能力强' },
+      { title:'活动策划/会展策划', desc:'各类活动统筹策划' },
+      { title:'销售代表/市场推广', desc:'跑市场，挑战与收入并存' },
+      { title:'自由职业者', desc:'自媒体、设计、摄影等自由发展' },
+      { title:'创业合伙人', desc:'与人合伙创业，互补共赢' },
+    ],
+  },
+};
+
+// 补充缺失行业的兜底
+for (const ind of ['con','art','agr','law','lang','sci','hum']) {
+  if (!industryCareers[ind]) industryCareers[ind] = JSON.parse(JSON.stringify(industryCareers.general));
+}
+
+// 获取行业推荐岗位
+function getIndustryJobs(major, dimKey) {
+  const ind = matchIndustry(major);
+  const data = industryCareers[ind] || industryCareers.general;
+  return data[dimKey] || industryCareers.general[dimKey];
+}
 
 let currentQ = 0;
 
@@ -349,8 +1370,8 @@ function renderStepBar() {
   const bar = document.getElementById('stepBar');
   bar.innerHTML = dimOrder.map((k, i) => {
     const firstQ = i * 6;
-    const done = answers.slice(0, firstQ).every(a => a > 0);
-    const active = !done && (firstQ === 0 || answers.slice(0, firstQ).every(a => a > 0)) && (firstQ === 0 || answers[firstQ - 1] > 0);
+    const done = firstQ > 0 && answers.slice(0, firstQ).every(a => a > 0);
+    const active = !done && (firstQ === 0 || answers.slice(0, firstQ).every(a => a > 0));
     let cls = 'step';
     if (active) cls += ' active';
     else if (done) cls += ' done';
@@ -366,11 +1387,70 @@ function showScreen(n) {
   document.getElementById('screen-' + n).classList.add('active');
 }
 
+// 用户信息存储
+const userInfo = { gender:'', personality:'', edu:'', major:'', eduPlan:'', eduPlanLabel:'' };
+
+function showInfoPage() {
+  clearSavedData(); // 重新测评时清除草稿
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-info').classList.add('active');
+  document.getElementById('stepBar').innerHTML = ''; // 清空步骤条
+  // 重置信息页
+  document.querySelectorAll('#screen-info .info-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('#screen-info input[type=radio]').forEach(r => r.checked = false);
+  document.getElementById('majorInput').value = '';
+  Object.keys(userInfo).forEach(k => userInfo[k] = '');
+  document.getElementById('startQuizBtn').disabled = true;
+  document.getElementById('infoHint').textContent = '请选择性别、性格、学历和就读专业';
+  // 重置按钮
+  const btn = document.getElementById('startQuizBtn');
+  btn.textContent = '开始答题 →';
+  btn.style.display = '';
+}
+
+function showStart() {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-0').classList.add('active');
+  document.getElementById('stepBar').innerHTML = '';
+}
+
+function selectInfo(field, value) {
+  userInfo[field] = value;
+  // 高亮选中的按钮
+  document.querySelectorAll(`#screen-info input[name="${field}"]`).forEach(r => {
+    r.checked = r.value === value;
+    r.parentElement.classList.toggle('selected', r.value === value);
+  });
+  // 检查是否已选必填项（专业单独检查 select 值）
+  const majorSelected = document.getElementById('majorInput').value !== '';
+  const required = userInfo.gender && userInfo.personality && userInfo.edu && majorSelected;
+  document.getElementById('startQuizBtn').disabled = !required;
+  document.getElementById('infoHint').textContent = required ? '✅ 信息已填完，继续下一步' : '请选择性别、性格、学历和就读专业';
+}
+
 function startQuiz() {
-  for (let i = 0; i < answers.length; i++) answers[i] = 0;
-  currentQ = 0;
-  showScreen(1);
-  renderQuestion();
+  try {
+    // 如果 localStorage 有未完成的答题，恢复
+    if (loadFromLocalStorage()) {
+      showScreen(1);
+      renderQuestion();
+      return;
+    }
+    // 根据学历选择题目版本
+    questions = getQuestionSet(userInfo.edu);
+    // 打乱题目顺序
+    questions = shuffleArray([...questions]);
+    // 重置答案数组
+    answers.length = 0;
+    for (let i = 0; i < questions.length; i++) answers[i] = 0;
+    currentQ = 0;
+    clearSavedData();
+    showScreen(1);
+    renderQuestion();
+  } catch(e) {
+    alert('出错了，请重新开始。');
+    showInfoPage();
+  }
 }
 
 function renderQuestion() {
@@ -410,6 +1490,8 @@ function selectAnswer(idx, val) {
     else r.parentElement.classList.remove('selected');
   });
   document.getElementById('nextBtn').disabled = false;
+  // 自动保存进度
+  saveToLocalStorage();
 }
 
 function nextQuestion() {
@@ -417,6 +1499,7 @@ function nextQuestion() {
   if (currentQ === questions.length - 1) { showResults(); return; }
   currentQ++;
   renderQuestion();
+  saveToLocalStorage();
 }
 
 function prevQuestion() {
@@ -439,11 +1522,13 @@ function calcResults() {
 }
 
 function showResults() {
+  clearSavedData(); // 答题完成，清掉草稿
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen-2').classList.add('active');
   renderStepBar();
 
-  const { scores, sorted, top3, fullCode } = calcResults();
+  try {
+    const { scores, sorted, top3, fullCode } = calcResults();
 
   let radarHTML = `<div style="display:flex;flex-direction:column;gap:8px;padding:0 10px;">`;
   dimOrder.forEach(k => {
@@ -469,10 +1554,10 @@ function showResults() {
   ).join(' ');
 
   const careersHTML = top3.map(k => {
-    const jobs = careerMap[k];
+    const jobs = getIndustryJobs(userInfo.major, k);
     return `
       <div class="result-section" style="border-left:4px solid ${dimColors[k]};">
-        <div class="result-title" style="color:${dimColors[k]};">${dimNames[k]} — 推荐方向</div>
+        <div class="result-title" style="color:${dimColors[k]};">${dimNames[k]} — ${industryNames[matchIndustry(userInfo.major)]}方向推荐</div>
         <ul class="career-list">
           ${jobs.map(j => `<li><strong>${j.title}</strong><small>${j.desc}</small></li>`).join('')}
         </ul>
@@ -496,6 +1581,13 @@ function showResults() {
       <div style="font-size:48px;margin-bottom:8px;">🧭</div>
       <h2 style="font-size:22px;">你的职业代码：<span style="color:#667eea;">${fullCode}</span></h2>
       <div style="margin:12px 0 20px;">${badgesHTML}</div>
+      <div style="font-size:13px;color:#999;display:flex;justify-content:center;gap:16px;flex-wrap:wrap;">
+        ${userInfo.gender ? `<span>${userInfo.gender === '男' ? '👦' : '👧'} ${userInfo.gender}</span>` : ''}
+        ${userInfo.personality ? `<span>${userInfo.personality === '内向' ? '🤫' : '🗣️'} 偏${userInfo.personality}</span>` : ''}
+        ${userInfo.edu ? `<span>📚 ${userInfo.edu}</span>` : ''}
+        ${userInfo.major ? `<span>🎯 ${userInfo.major}</span>` : ''}
+        ${userInfo.eduPlanLabel ? `<span>🗺️ ${userInfo.eduPlanLabel}</span>` : userInfo.eduPlan ? `<span>🗺️ ${userInfo.eduPlan}</span>` : ''}
+      </div>
     </div>
 
     <div class="result-section">
@@ -506,7 +1598,8 @@ function showResults() {
     <div class="result-section" style="background:#667eea15;">
       <div class="result-title">💡 解读</div>
       <div class="result-desc">
-        <p style="margin-bottom:12px;">你的主要类型为：<strong>${dimNames[top3[0]]}</strong>，次要类型为 <strong>${dimNames[top3[1]]}</strong> 和 <strong>${dimNames[top3[2]]}</strong>。</p>
+        <p style="margin-bottom:8px;">你的主要类型为：<strong>${dimNames[top3[0]]}</strong>，次要类型为 <strong>${dimNames[top3[1]]}</strong> 和 <strong>${dimNames[top3[2]]}</strong>。</p>
+        <p style="margin-bottom:8px;font-size:13px;color:#888;">🎯 基于你选择的「${userInfo.major}」专业，以下推荐已定向到 ${industryNames[matchIndustry(userInfo.major)]} 行业相关岗位：</p>
         <p>${interpretMap[top3[0]]}</p>
         <p style="margin-top:10px;">${interpretMap[top3[1]]}</p>
       </div>
@@ -518,13 +1611,37 @@ function showResults() {
       <div class="result-title">📝 给你的建议</div>
       <div class="result-desc">
         <p style="margin-bottom:8px;">1️⃣ <strong>测评是参考，不是定论</strong> — 你的兴趣和能力会随着经历而成长，别把自己框死。</p>
-        <p style="margin-bottom:8px;">2️⃣ <strong>有方向就行动</strong> — 找这个方向的学长学姐聊聊，有机会的话实习/兼职体验一下。</p>
-        <p style="margin-bottom:8px;">3️⃣ <strong>组合最吃香</strong> — 最强的竞争力来自能力组合，比如"技术+沟通"、"创意+执行"。</p>
+        <p style="margin-bottom:8px;">2️⃣ <strong>有方向就行动</strong> — 找到了方向就去做职业规划，职业规划是提升你的就业竞争力。</p>
+        <p style="margin-bottom:8px;">3️⃣ <strong>组合最吃香</strong> — 最强的竞争力来自能力复合，比如"技术+沟通"、"创意+执行"。</p>
         <p>4️⃣ <strong>过段时间再测一次</strong> — 看看自己的变化，了解自己的成长轨迹 😄</p>
       </div>
     </div>
   `;
+  } catch(e) {
+    alert('结果生成出错，请重新测评。');
+    showInfoPage();
+  }
 }
 </script>
+
+<!-- 底部广告位 -->
+<div style="margin-top:28px;padding:24px;border-radius:16px;background:linear-gradient(135deg,#667eea,#764ba2);text-align:center;">
+  <div style="display:inline-block;padding:8px 24px;background:rgba(255,255,255,0.2);color:#fff;border-radius:30px;font-size:16px;font-weight:600;border:1px solid rgba(255,255,255,0.3);backdrop-filter:blur(4px);margin-bottom:14px;">
+    🎯 升学规划 · 职业咨询
+  </div>
+  <div style="font-size:14px;color:rgba(255,255,255,0.9);margin-bottom:14px;line-height:1.7;">
+    想了解专业和院校以及一对一规划问题？<br>欢迎联系，<strong style="color:#fff;">小宇学长</strong>定让您满意。
+  </div>
+  <a href="tel:18779263395" style="display:inline-block;padding:10px 28px;background:rgba(255,255,255,0.2);color:#fff;border-radius:30px;text-decoration:none;font-size:16px;font-weight:600;border:1px solid rgba(255,255,255,0.3);backdrop-filter:blur(4px);">
+    📞 一键拨打 18779263395
+  </a>
+  <button onclick="navigator.clipboard.writeText('18779263395').then(()=>{this.textContent='✅ 已复制';setTimeout(()=>this.textContent='📋 复制微信 18779263395',2000)}).catch(()=>alert('复制失败，微信号：18779263395'))" style="display:inline-block;margin-top:10px;padding:8px 22px;background:rgba(255,255,255,0.15);color:#fff;border-radius:30px;border:1px solid rgba(255,255,255,0.25);font-size:14px;cursor:pointer;backdrop-filter:blur(4px);">
+    📋 复制微信 18779263395
+  </button>
+  <div style="margin-top:12px;font-size:12px;color:rgba(255,255,255,0.7);">周一至周日 9:00-21:00</div>
+</div>
+
+<!-- 版本号 v4.0 -->
+<div style="position:fixed;bottom:6px;right:10px;font-size:10px;color:#bbb;z-index:999;pointer-events:none;">v4.0</div>
 </body>
 </html>
