@@ -7,181 +7,321 @@
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+    background: linear-gradient(145deg, #e0e7ff 0%, #dbeafe 30%, #ede9fe 100%);
     min-height: 100vh;
     display: flex;
     justify-content: center;
-    padding: 20px;
+    padding: 12px;
+    position: relative;
+    overflow-x: hidden;
   }
+  /* Decorative background blobs */
+  body::before {
+    content: '';
+    position: fixed;
+    width: 500px;
+    height: 500px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(99,102,241,0.07) 0%, transparent 70%);
+    bottom: -200px;
+    left: -150px;
+    pointer-events: none;
+  }
+
   .container {
-    max-width: 720px;
+    max-width: 680px;
     width: 100%;
-    background: rgba(255,255,255,0.96);
-    border-radius: 24px;
-    padding: 32px 28px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
-    margin-top: 20px;
-    margin-bottom: 20px;
+    background: #fff;
+    border-radius: 28px;
+    padding: 40px 32px 36px;
+    box-shadow: 0 8px 40px rgba(99,102,241,0.12), 0 2px 8px rgba(99,102,241,0.06);
+    margin: 16px auto;
+    position: relative;
   }
+
   h1 {
-    font-size: 26px;
+    font-size: 28px;
     text-align: center;
-    color: #333;
+    color: #0f172a;
+    font-weight: 800;
+    letter-spacing: -0.5px;
   }
   .subtitle {
     text-align: center;
-    color: #888;
+    color: #64748b;
     font-size: 14px;
-    margin: 8px 0 24px;
-    line-height: 1.6;
+    margin: 6px 0 28px;
+    line-height: 1.7;
+    font-weight: 400;
   }
+
+  /* ── Step Bar ── */
   .step-bar {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 28px;
+    margin-bottom: 32px;
     position: relative;
-    padding: 0 10px;
+    padding: 0 8px;
   }
   .step-bar::before {
     content: '';
     position: absolute;
     top: 14px;
-    left: 30px;
-    right: 30px;
+    left: 32px;
+    right: 32px;
     height: 3px;
-    background: #e0e0e0;
-    border-radius: 2px;
+    background: #e2e8f0;
+    border-radius: 3px;
     z-index: 0;
   }
   .step {
-    width: 32px; height: 32px;
+    width: 30px; height: 30px;
     border-radius: 50%;
-    background: #e0e0e0;
+    background: #e2e8f0;
     display: flex; align-items: center; justify-content: center;
-    font-size: 12px; font-weight: 600; color: #999;
+    font-size: 12px; font-weight: 700; color: #94a3b8;
     position: relative; z-index: 1;
-    transition: all 0.3s;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  .step.active { background: #667eea; color: #fff; transform: scale(1.1); }
-  .step.done { background: #48bb78; color: #fff; }
+  .step.active { background: linear-gradient(135deg, #6366f1, #4f46e5); color: #fff; transform: scale(1.12); box-shadow: 0 4px 14px rgba(99,102,241,0.35); }
+  .step.done { background: #10b981; color: #fff; box-shadow: 0 4px 12px rgba(16,185,129,0.3); }
   .step-label {
     position: absolute; top: 36px;
-    font-size: 10px; color: #aaa;
+    font-size: 10px; color: #94a3b8;
     white-space: nowrap;
     left: 50%; transform: translateX(-50%);
+    font-weight: 500;
+    transition: color 0.3s;
   }
-  .step.active .step-label, .step.done .step-label { color: #667eea; font-weight: 600; }
+  .step.active .step-label, .step.done .step-label { color: #4f46e5; font-weight: 600; }
+  .step.done .step-label { color: #10b981; }
 
-  .screen { display: none; opacity: 0; transition: opacity 0.25s ease; }
-  .screen.active { display: block; opacity: 1; }
+  /* ── Screens ── */
+  .screen { display: none; opacity: 0; transition: opacity 0.3s ease, transform 0.3s ease; transform: translateY(6px); }
+  .screen.active { display: block; opacity: 1; transform: translateY(0); }
 
   @media print {
     body { background: #fff; padding: 0; }
-    .container { box-shadow: none; margin: 0; border-radius: 0; }
-    .nav-btns, .step-bar, #prevBtn, #nextBtn, .btn, [style*="ad"] { display: none !important; }
+    body::before, body::after { display: none; }
+    .container { box-shadow: none; margin: 0; border-radius: 0; padding: 20px; }
+    .nav-btns, .step-bar, #prevBtn, #nextBtn, .btn { display: none !important; }
     .result-section { break-inside: avoid; page-break-inside: avoid; }
+    .career-card { break-inside: avoid; }
   }
 
-  .question { margin-bottom: 18px; }
-  .question-text {
-    font-size: 16px; font-weight: 600; color: #333;
-    margin-bottom: 10px; line-height: 1.5;
+  /* ── Questions ── */
+  .question { margin-bottom: 20px; animation: fadeSlideIn 0.35s ease; }
+  @keyframes fadeSlideIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
   }
-  .options { display: flex; gap: 8px; flex-wrap: wrap; }
+  .question-text {
+    font-size: 17px; font-weight: 600; color: #0f172a;
+    margin-bottom: 14px; line-height: 1.6;
+    padding: 0 2px;
+  }
+  .options { display: flex; gap: 10px; flex-wrap: wrap; }
   .opt-btn {
-    flex: 1; min-width: 56px;
-    padding: 10px 8px;
-    border: 2px solid #e0e0e0;
-    border-radius: 12px;
-    background: #fafafa;
+    flex: 1; min-width: 60px;
+    padding: 12px 10px;
+    border: 2px solid #e2e8f0;
+    border-radius: 14px;
+    background: #f8fafc;
     cursor: pointer;
     text-align: center;
-    font-size: 13px; color: #666;
-    transition: all 0.2s;
+    font-size: 13px; color: #475569;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    font-weight: 500;
+    user-select: none;
   }
-  .opt-btn:hover { border-color: #667eea; background: #f0f2ff; }
-  .opt-btn.selected { border-color: #667eea; background: #667eea; color: #fff; font-weight: 600; }
+  .opt-btn:hover { border-color: #818cf8; background: #eef2ff; transform: translateY(-1px); }
+  .opt-btn.selected { border-color: #6366f1; background: linear-gradient(135deg, #6366f1, #4f46e5); color: #fff; font-weight: 600; box-shadow: 0 4px 14px rgba(99,102,241,0.3); transform: translateY(-1px); }
   .opt-btn input { display: none; }
 
+  /* ── Navigation Buttons ── */
   .nav-btns {
     display: flex; gap: 12px;
-    margin-top: 28px;
+    margin-top: 32px;
   }
   .btn {
     flex: 1;
-    padding: 14px;
+    padding: 14px 20px;
     border: none; border-radius: 14px;
     font-size: 16px; font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    letter-spacing: 0.3px;
   }
-  .btn-primary { background: #667eea; color: #fff; }
-  .btn-primary:hover { background: #5a6fd6; transform: translateY(-1px); }
-  .btn-primary:disabled { background: #ccc; cursor: not-allowed; transform: none; }
-  .btn-secondary { background: #f0f0f0; color: #666; }
-  .btn-secondary:hover { background: #e0e0e0; }
+  .btn-primary {
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(99,102,241,0.3);
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(99,102,241,0.4); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-primary:disabled { background: #cbd5e1; box-shadow: none; cursor: not-allowed; transform: none; }
+  .btn-secondary { background: #f1f5f9; color: #475569; }
+  .btn-secondary:hover { background: #e2e8f0; transform: translateY(-1px); }
 
+  /* ── Result Sections ── */
   .result-section {
     margin-bottom: 24px;
-    padding: 20px;
-    border-radius: 16px;
-    background: #f8f9ff;
+    padding: 24px;
+    border-radius: 20px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
   }
   .result-title {
-    font-size: 18px; font-weight: 700;
-    margin-bottom: 12px;
+    font-size: 20px; font-weight: 700;
+    margin-bottom: 14px;
+    color: #0f172a;
   }
-  .result-desc { font-size: 14px; color: #555; line-height: 1.8; }
+  .result-desc { font-size: 14px; color: #475569; line-height: 1.8; }
+
+  /* ── Dimension Badges ── */
   .badge {
     display: inline-block;
-    padding: 4px 14px;
-    border-radius: 20px;
-    font-size: 13px; font-weight: 600;
+    padding: 5px 16px;
+    border-radius: 24px;
+    font-size: 13px; font-weight: 700;
     margin: 3px 4px;
+    letter-spacing: 0.3px;
   }
-  .badge.r { background: #fecaca; color: #dc2626; }
-  .badge.i { background: #fed7aa; color: #ea580c; }
-  .badge.a { background: #fbd5e5; color: #e11d48; }
-  .badge.s { background: #bbf7d0; color: #16a34a; }
-  .badge.e { background: #fef08a; color: #ca8a04; }
-  .badge.c { background: #bfdbfe; color: #2563eb; }
-  .badge.d { background: #e9d5ff; color: #7c3aed; }
-  .badge.f { background: #fed7d7; color: #dc2626; }
+  .badge.r { background: linear-gradient(135deg, #fecaca, #fca5a5); color: #991b1b; }
+  .badge.i { background: linear-gradient(135deg, #fed7aa, #fdba74); color: #9a3412; }
+  .badge.a { background: linear-gradient(135deg, #fbcfe8, #f9a8d4); color: #9d174d; }
+  .badge.s { background: linear-gradient(135deg, #bbf7d0, #86efac); color: #166534; }
+  .badge.e { background: linear-gradient(135deg, #fef08a, #fde047); color: #854d0e; }
+  .badge.c { background: linear-gradient(135deg, #bfdbfe, #93c5fd); color: #1e40af; }
+  .badge.d { background: linear-gradient(135deg, #e9d5ff, #d8b4fe); color: #5b21b6; }
+  .badge.f { background: linear-gradient(135deg, #fed7d7, #fca5a5); color: #991b1b; }
 
-  .career-list { list-style: none; }
+  /* ── Career Cards ── */
+  .career-list { list-style: none; display: grid; grid-template-columns: 1fr; gap: 10px; }
   .career-list li {
-    padding: 10px 14px;
-    margin-bottom: 8px;
+    padding: 14px 18px;
     background: #fff;
-    border-radius: 10px;
-    border-left: 4px solid #667eea;
-    font-size: 14px; color: #333;
+    border-radius: 14px;
+    border-left: 4px solid #6366f1;
+    font-size: 14px; color: #0f172a;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    transition: all 0.2s;
   }
-  .career-list li small { display: block; color: #999; font-size: 12px; margin-top: 3px; }
+  .career-list li:hover { transform: translateX(4px); box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .career-list li small { display: block; color: #64748b; font-size: 12px; margin-top: 4px; font-weight: 400; }
 
   .progress-text {
     text-align: center;
-    color: #999;
+    color: #64748b;
     font-size: 13px;
+    margin-bottom: 16px;
+    font-weight: 500;
+  }
+
+  /* ── Dimension Score Bars ── */
+  .dim-bar-wrap { margin-bottom: 14px; }
+  .dim-bar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .dim-bar-label { font-size: 13px; font-weight: 600; color: #334155; }
+  .dim-bar-value { font-size: 13px; font-weight: 700; color: #0f172a; }
+  .dim-bar-track {
+    height: 10px; background: #e2e8f0; border-radius: 10px;
+    overflow: hidden; position: relative;
+  }
+  .dim-bar-fill {
+    height: 100%; border-radius: 10px;
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+  }
+  .dim-bar-fill::after {
+    content: ''; position: absolute; right: 0; top: 0; bottom: 0;
+    width: 20px; background: rgba(255,255,255,0.25);
+    border-radius: 10px;
+  }
+
+  /* ── Info Page ── */
+  .info-section {
+    margin-bottom: 20px;
+    padding: 20px;
+    background: #f8fafc;
+    border-radius: 18px;
+    border: 1px solid #e2e8f0;
+  }
+  .info-label {
+    font-size: 15px; font-weight: 600; color: #1e293b;
     margin-bottom: 12px;
   }
+  .info-opts { display: flex; gap: 10px; flex-wrap: wrap; }
+  .info-btn {
+    flex: 1; min-width: 80px;
+    padding: 12px 20px;
+    border: 2px solid #e2e8f0;
+    border-radius: 14px;
+    background: #fff;
+    text-align: center;
+    font-size: 14px; color: #475569;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .info-btn:hover { border-color: #818cf8; background: #eef2ff; }
+  .info-btn.selected { border-color: #6366f1; background: linear-gradient(135deg, #6366f1, #4f46e5); color: #fff; font-weight: 600; box-shadow: 0 4px 14px rgba(99,102,241,0.2); }
 
-  @media (max-width: 480px) {
-    .container { padding: 20px 16px; }
-    .opt-btn { min-width: 44px; padding: 8px 6px; font-size: 12px; }
-    h1 { font-size: 22px; }
+  .plan-option {
+    background: #fff;
+    border: 2px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 18px 20px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .plan-option:hover { border-color: #818cf8; background: #f8fafc; }
+
+  /* ── Select Styling ── */
+  select {
+    width: 100%;
+    padding: 14px 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: 14px;
+    font-size: 14px;
+    outline: none;
+    background: #f8fafc;
+    color: #1e293b;
+    appearance: auto;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  select:focus { border-color: #818cf8; background: #fff; box-shadow: 0 0 0 4px rgba(99,102,241,0.1); }
+
+  /* ── Welcome Page ── */
+  .welcome-icon { font-size: 72px; margin-bottom: 16px; display: block; }
+  .welcome-desc { font-size: 16px; color: #475569; line-height: 1.8; margin-bottom: 24px; }
+  .welcome-meta { font-size: 13px; color: #94a3b8; margin-bottom: 16px; }
+  .version-badge {
+    display: inline-block;
+    padding: 3px 12px;
+    border-radius: 20px;
+    background: #f1f5f9;
+    font-size: 11px;
+    font-weight: 600;
+    color: #94a3b8;
+    margin-bottom: 16px;
   }
 
-  /* 个人信息页 */
-  .info-section { margin-bottom: 20px; padding: 16px; background: #f8f9ff; border-radius: 16px; }
-  .info-label { font-size: 15px; font-weight: 600; color: #444; margin-bottom: 12px; }
-  .info-opts { display: flex; gap: 10px; flex-wrap: wrap; }
-  .info-btn { flex: 1; min-width: 80px; padding: 12px 16px; border: 2px solid #e0e0e0; border-radius: 12px; background: #fff; text-align: center; font-size: 14px; color: #666; cursor: pointer; transition: all 0.2s; }
-  .info-btn:hover { border-color: #667eea; background: #f0f2ff; }
-  .info-btn.selected { border-color: #667eea; background: #667eea; color: #fff; font-weight: 600; }
-  .plan-option { background:#fff; border:2px solid #e8e8e8; border-radius:14px; padding:16px 18px; margin-bottom:10px; cursor:pointer; transition:all 0.2s; }
-  .plan-option:hover { border-color:#667eea; }
+  /* ── Responsive ── */
+  @media (max-width: 520px) {
+    .container { padding: 24px 18px 20px; border-radius: 20px; margin: 10px; }
+    .opt-btn { min-width: 48px; padding: 10px 8px; font-size: 12px; }
+    h1 { font-size: 24px; }
+    .info-btn { padding: 10px 14px; font-size: 13px; }
+    .result-section { padding: 18px; }
+    .dim-bar-track { height: 8px; }
+  }
+
+  /* ── Chart SVG ── */
+  .chart-container {
+    display: flex; justify-content: center; margin: 8px 0 20px;
+  }
 </style>
 </head>
 <body>
@@ -193,16 +333,17 @@
 
   <!-- 欢迎页 -->
   <div class="screen active" id="screen-0">
-    <div style="text-align:center;padding:30px 0;">
-      <div style="font-size:64px;margin-bottom:16px;">🧭</div>
-      <p style="font-size:16px;color:#555;line-height:1.8;margin-bottom:24px;">
+    <div style="text-align:center;padding:20px 0 10px;">
+      <span class="welcome-icon">🧭</span>
+      <p class="welcome-desc">
         不知道自己适合学什么专业、做什么工作？<br>
         这个测评从<strong>兴趣、技能、价值观、工作风格、学习偏好</strong><br>
         等多角度帮你全面认识自己。
       </p>
-      <p style="font-size:13px;color:#999;margin-bottom:16px;">共 48 题，约 8-12 分钟</p>
-      <div style="font-size:11px;color:#ddd;margin-bottom:12px;">v4.0</div>
-      <button class="btn btn-primary" onclick="showInfoPage()" style="max-width:240px;margin:0 auto;">开始测评 →</button>
+      <p class="welcome-meta">共 48 题 · 约 8-12 分钟</p>
+      <div style="margin-top:8px;">
+        <button class="btn btn-primary" onclick="showInfoPage()" style="max-width:240px;margin:0 auto;">开始测评 →</button>
+      </div>
     </div>
   </div>
 
@@ -516,21 +657,51 @@
       <button class="btn btn-secondary" id="prevBtn" onclick="prevQuestion()">← 上一题</button>
       <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">下一题 →</button>
     </div>
-    <!-- 答题区引导 + 广告位 -->
-    <div style="margin-top:20px;">
-      <div style="padding:14px 20px;border-radius:12px;background:linear-gradient(135deg,#667eea08,#764ba208);text-align:center;margin-bottom:10px;">
-        <div style="font-size:13px;color:#667eea;font-weight:500;">🎯 测完之后有详细职业推荐 + 针对你专业的具体岗位</div>
+    <!-- 答题区引导提示 -->
+    <div style="margin-top:24px;padding:14px 20px;border-radius:14px;background:linear-gradient(135deg,#eef2ff,#f0f4ff);text-align:center;border:1px solid #e0e7ff;">
+      <div style="font-size:13px;color:#4f46e5;font-weight:600;">🎯 测完之后有详细职业推荐 + 针对你专业的具体岗位</div>
+    </div>
+    <!-- 升学规划咨询卡片 -->
+    <div style="margin-top:12px;padding:24px 20px;border-radius:18px;background:linear-gradient(135deg,#e0e7ff,#dbeafe);text-align:center;">
+      <div style="display:inline-block;padding:6px 22px;background:rgba(99,102,241,0.15);color:#4f46e5;border-radius:20px;font-size:13px;font-weight:600;margin-bottom:12px;">
+        🎯 升学规划 · 职业咨询
       </div>
-      <div style="padding:12px 20px;border-radius:12px;border:1.5px dashed #ddd;text-align:center;">
-        <div style="font-size:12px;font-weight:600;color:#bbb;letter-spacing:2px;">— 广告位招租 —</div>
-        <div style="font-size:11px;color:#ccc;margin-top:4px;">📢 合作联系：18779263395（微信同号）</div>
+      <div style="font-size:14px;color:#475569;margin-bottom:12px;line-height:1.7;">
+        想了解专业和院校以及一对一规划问题？<br>欢迎联系，<strong style="color:#4f46e5;font-weight:700;">小宇学长</strong>定让您满意。
       </div>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+        <a href="tel:18779263395" style="display:inline-flex;align-items:center;gap:5px;padding:10px 24px;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border-radius:30px;text-decoration:none;font-size:13px;font-weight:600;box-shadow:0 3px 12px rgba(99,102,241,0.25);transition:all 0.2s;" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform=''">
+          📞 一键拨打
+        </a>
+        <button onclick="navigator.clipboard.writeText('18779263395').then(()=>{this.textContent='✅ 已复制';setTimeout(()=>this.textContent='📋 复制微信',2000)}).catch(()=>alert('复制失败，微信号：18779263395'))" style="display:inline-flex;align-items:center;gap:5px;padding:10px 24px;background:rgba(255,255,255,0.6);color:#4f46e5;border-radius:30px;border:1px solid rgba(99,102,241,0.2);font-size:13px;font-weight:500;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.9)'" onmouseout="this.style.background='rgba(255,255,255,0.6)'">
+          📋 复制微信
+        </button>
+      </div>
+      <div style="margin-top:10px;font-size:11px;color:#94a3b8;">周一至周日 9:00-21:00</div>
     </div>
   </div>
 
   <div class="screen" id="screen-2">
     <div id="resultArea"></div>
-    <div class="nav-btns" style="margin-top:12px;">
+    <!-- 结果页底部咨询卡片 -->
+    <div style="margin-top:28px;padding:24px 22px;border-radius:18px;background:linear-gradient(135deg,#e0e7ff,#dbeafe);text-align:center;border:1px solid rgba(99,102,241,0.08);">
+      <div style="display:inline-block;padding:6px 22px;background:rgba(99,102,241,0.15);color:#4f46e5;border-radius:20px;font-size:14px;font-weight:600;margin-bottom:12px;">
+        🎯 升学规划 · 职业咨询
+      </div>
+      <div style="font-size:14px;color:#475569;margin-bottom:14px;line-height:1.7;">
+        想了解专业和院校以及一对一规划问题？<br>欢迎联系，<strong style="color:#4f46e5;font-weight:700;">小宇学长</strong>定让您满意。
+      </div>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+        <a href="tel:18779263395" style="display:inline-flex;align-items:center;gap:6px;padding:11px 26px;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border-radius:30px;text-decoration:none;font-size:14px;font-weight:600;box-shadow:0 4px 14px rgba(99,102,241,0.25);transition:all 0.2s;" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform=''">
+          📞 一键拨打
+        </a>
+        <button onclick="navigator.clipboard.writeText('18779263395').then(()=>{this.textContent='✅ 已复制';setTimeout(()=>this.textContent='📋 复制微信',2000)}).catch(()=>alert('复制失败，微信号：18779263395'))" style="display:inline-flex;align-items:center;gap:6px;padding:11px 26px;background:rgba(255,255,255,0.6);color:#4f46e5;border-radius:30px;border:1px solid rgba(99,102,241,0.2);font-size:13px;font-weight:500;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.9)'" onmouseout="this.style.background='rgba(255,255,255,0.6)'">
+          📋 复制微信
+        </button>
+      </div>
+      <div style="margin-top:12px;font-size:11px;color:#94a3b8;">周一至周日 9:00-21:00</div>
+    </div>
+    <div class="nav-btns" style="margin-top:20px;">
       <button class="btn btn-secondary" onclick="showInfoPage()">重新测评</button>
       <button class="btn btn-primary" onclick="window.print()">🖨️ 打印/保存</button>
     </div>
@@ -1530,19 +1701,18 @@ function showResults() {
   try {
     const { scores, sorted, top3, fullCode } = calcResults();
 
-  let radarHTML = `<div style="display:flex;flex-direction:column;gap:8px;padding:0 10px;">`;
+  let radarHTML = `<div style="display:flex;flex-direction:column;gap:6px;">`;
   dimOrder.forEach(k => {
     const pct = scores[k];
     const isTop = top3.includes(k);
     radarHTML += `
-      <div style="display:flex;align-items:center;gap:10px;">
-        <span style="width:52px;font-size:13px;font-weight:${isTop?'700':'400'};color:${isTop?dimColors[k]:'#888'};">
-          ${dimNames[k]}
-        </span>
-        <div style="flex:1;height:22px;background:#eee;border-radius:11px;overflow:hidden;">
-          <div style="height:100%;width:${pct}%;background:${dimColors[k]};border-radius:11px;transition:width 1s;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;font-weight:600;">
-            ${pct > 8 ? pct + '%' : ''}
-          </div>
+      <div class="dim-bar-wrap">
+        <div class="dim-bar-header">
+          <span class="dim-bar-label" style="color:${isTop?dimColors[k]:'#94a3b8'};${isTop?'font-weight:700;':''}">${dimNames[k]}</span>
+          <span class="dim-bar-value">${pct}%</span>
+        </div>
+        <div class="dim-bar-track">
+          <div class="dim-bar-fill" style="width:${pct}%;background:${dimColors[k]};"></div>
         </div>
       </div>
     `;
@@ -1577,11 +1747,11 @@ function showResults() {
   };
 
   document.getElementById('resultArea').innerHTML = `
-    <div style="text-align:center;margin-bottom:20px;">
-      <div style="font-size:48px;margin-bottom:8px;">🧭</div>
-      <h2 style="font-size:22px;">你的职业代码：<span style="color:#667eea;">${fullCode}</span></h2>
-      <div style="margin:12px 0 20px;">${badgesHTML}</div>
-      <div style="font-size:13px;color:#999;display:flex;justify-content:center;gap:16px;flex-wrap:wrap;">
+    <div style="text-align:center;margin-bottom:24px;">
+      <div style="font-size:56px;margin-bottom:10px;">🧭</div>
+      <h2 style="font-size:24px;color:#0f172a;">你的职业代码：<span style="background:linear-gradient(135deg,#6366f1,#4f46e5);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">${fullCode}</span></h2>
+      <div style="margin:14px 0 22px;">${badgesHTML}</div>
+      <div style="font-size:13px;color:#64748b;display:flex;justify-content:center;gap:16px;flex-wrap:wrap;">
         ${userInfo.gender ? `<span>${userInfo.gender === '男' ? '👦' : '👧'} ${userInfo.gender}</span>` : ''}
         ${userInfo.personality ? `<span>${userInfo.personality === '内向' ? '🤫' : '🗣️'} 偏${userInfo.personality}</span>` : ''}
         ${userInfo.edu ? `<span>📚 ${userInfo.edu}</span>` : ''}
@@ -1624,24 +1794,5 @@ function showResults() {
 }
 </script>
 
-<!-- 底部广告位 -->
-<div style="margin-top:28px;padding:24px;border-radius:16px;background:linear-gradient(135deg,#667eea,#764ba2);text-align:center;">
-  <div style="display:inline-block;padding:8px 24px;background:rgba(255,255,255,0.2);color:#fff;border-radius:30px;font-size:16px;font-weight:600;border:1px solid rgba(255,255,255,0.3);backdrop-filter:blur(4px);margin-bottom:14px;">
-    🎯 升学规划 · 职业咨询
-  </div>
-  <div style="font-size:14px;color:rgba(255,255,255,0.9);margin-bottom:14px;line-height:1.7;">
-    想了解专业和院校以及一对一规划问题？<br>欢迎联系，<strong style="color:#fff;">小宇学长</strong>定让您满意。
-  </div>
-  <a href="tel:18779263395" style="display:inline-block;padding:10px 28px;background:rgba(255,255,255,0.2);color:#fff;border-radius:30px;text-decoration:none;font-size:16px;font-weight:600;border:1px solid rgba(255,255,255,0.3);backdrop-filter:blur(4px);">
-    📞 一键拨打 18779263395
-  </a>
-  <button onclick="navigator.clipboard.writeText('18779263395').then(()=>{this.textContent='✅ 已复制';setTimeout(()=>this.textContent='📋 复制微信 18779263395',2000)}).catch(()=>alert('复制失败，微信号：18779263395'))" style="display:inline-block;margin-top:10px;padding:8px 22px;background:rgba(255,255,255,0.15);color:#fff;border-radius:30px;border:1px solid rgba(255,255,255,0.25);font-size:14px;cursor:pointer;backdrop-filter:blur(4px);">
-    📋 复制微信 18779263395
-  </button>
-  <div style="margin-top:12px;font-size:12px;color:rgba(255,255,255,0.7);">周一至周日 9:00-21:00</div>
-</div>
-
-<!-- 版本号 v4.0 -->
-<div style="position:fixed;bottom:6px;right:10px;font-size:10px;color:#bbb;z-index:999;pointer-events:none;">v4.0</div>
 </body>
 </html>
